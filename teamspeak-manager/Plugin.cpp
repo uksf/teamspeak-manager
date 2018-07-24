@@ -5,6 +5,7 @@
 #include "teamspeak/public_definitions.h"
 #include "teamspeak/public_errors.h"
 #include "TextMessage.h"
+#include "CommandServer.h"
 
 #ifdef _WIN32
 #define STRCPY(dest, destSize, src) strcpy_s(dest, destSize, src)
@@ -21,18 +22,6 @@
 #define SERVERINFO_BUFSIZE 256
 #define CHANNELINFO_BUFSIZE 512
 #define RETURNCODE_BUFSIZE 128
-
-#ifdef _WIN32
-static int wcharToUtf8(const wchar_t* str, char** result) {
-    const int outlen = WideCharToMultiByte(CP_UTF8, 0, str, -1, nullptr, 0, nullptr, nullptr);
-    *result = static_cast<char*>(malloc(outlen));
-    if (WideCharToMultiByte(CP_UTF8, 0, str, -1, *result, outlen, nullptr, nullptr) == 0) {
-        *result = nullptr;
-        return -1;
-    }
-    return 0;
-}
-#endif
 
 const char* ts3plugin_name() {
     return "Teamspeak Manager";
@@ -58,32 +47,32 @@ void ts3plugin_setFunctionPointers(const struct TS3Functions funcs) {
     ts3Functions = funcs;
 }
 
-char *pluginID = nullptr;
-void ts3plugin_registerPluginID(const char* commandID) {
-    pluginID = _strdup(commandID);
-    //LOG("Registered: [%s]", str);
-    if (Engine::getInstance() != NULL) {
-        if (((CCommandServer *)Engine::getInstance()->getExternalServer()) != nullptr) {
-            ((CCommandServer *)Engine::getInstance()->getExternalServer())->setCommandId(pluginID);
-        }
-    }
-}
+//char *pluginID = nullptr;
+//void ts3plugin_registerPluginID(const char* commandID) {
+//    pluginID = _strdup(commandID);
+//    if (Engine::getInstance() != NULL) {
+//        if (dynamic_cast<CommandServer *>(Engine::getInstance()->getCommandServer()) != nullptr) {
+//            dynamic_cast<CommandServer *>(Engine::getInstance()->getCommandServer())->setCommandId(pluginID);
+//        }
+//    }
+//}
+//
+//void ts3plugin_onPluginCommandEvent(uint64 serverConnectionHandlerID, const char* pluginName, const char* pluginCommand) {
+//    if (pluginName && pluginCommand) {
+//        if (strstr(pluginName, "tsm") != nullptr && Engine::getInstance()->getCommandServer()) {
+//            Engine::getInstance()->getCommandServer()->handleMessage((unsigned char *)pluginCommand);
+//        }
+//    }
+//}
 
 int ts3plugin_init() {
-    Engine::getInstance()->initialize(new TSClient());
+    Engine::getInstance()->initialize(new TSClient(), new CommandServer());
+    //if (pluginID != nullptr) dynamic_cast<CommandServer *>(Engine::getInstance()->getCommandServer())->setCommandId(pluginID);
+    if (ts3Functions.getCurrentServerConnectionHandlerID()) {
+        ts3plugin_onConnectStatusChangeEvent(ts3Functions.getCurrentServerConnectionHandlerID(), STATUS_CONNECTION_ESTABLISHED, NULL);
+    }
 
     return 0;
-}
-
-void ts3plugin_shutdown() {
-    if (Engine::getInstance()->getClient()->getState() != STATE_STOPPED && Engine::getInstance()->getClient()->getState() != STATE_STOPPING) {
-        Engine::getInstance()->getClient()->stop();
-    }
-    Engine::getInstance()->stop();
-}
-
-int ts3plugin_requestAutoload() {
-    return 1;
 }
 
 void ts3plugin_onConnectStatusChangeEvent(uint64 id, const int status, unsigned int err) {
@@ -96,6 +85,13 @@ void ts3plugin_onConnectStatusChangeEvent(uint64 id, const int status, unsigned 
             Engine::getInstance()->getClient()->stop();
         }
     }
+}
+
+void ts3plugin_shutdown() {
+    if (Engine::getInstance()->getClient()->getState() != STATE_STOPPED && Engine::getInstance()->getClient()->getState() != STATE_STOPPING) {
+        Engine::getInstance()->getClient()->stop();
+    }
+    Engine::getInstance()->stop();
 }
 
 void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, const char* moveMessage) {
@@ -111,5 +107,5 @@ void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientI
 
 void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, const char* uniqueClientIdentifier, uint64 clientDatabaseID) {
     LOG("Client DBID retrieved: %d", clientDatabaseID);
-    Engine::getInstance()->getPipeManager()->sendMessage(TextMessage::formatNewMessage("checkClientServerGroups", "%d", clientDatabaseID));
+    Engine::getInstance()->getPipeManager()->sendMessage(TextMessage::formatNewMessage("CheckClientServerGroups", "%d", clientDatabaseID));
 }

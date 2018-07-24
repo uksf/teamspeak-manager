@@ -12,12 +12,13 @@ public:
     Engine() { g_Log = nullptr; }
     ~Engine() { LOG("* Destroying logging engine."); delete g_Log; }
 
-    void initialize(IClient *client);
+    void initialize(IClient *client, IServer * commandServer);
 
     void start();
     void stop();
 
     DECLARE_MEMBER(IServer *, PipeManager)
+    DECLARE_MEMBER(IServer *, CommandServer)
     DECLARE_MEMBER(ProcedureEngine *, ProcedureEngine)
     DECLARE_MEMBER(IClient *, Client)
     DECLARE_MEMBER(STATE, State)

@@ -2,11 +2,12 @@
 #include "TextMessage.h"
 #include "Engine.h"
 #include <wincon.h>
+#include <sddl.h>
 
 #define PIPE_NAME_TO "\\\\.\\pipe\\teamspeak-manager-toTS"
 #define PIPE_NAME_FROM "\\\\.\\pipe\\teamspeak-manager-fromTS"
 
-PipeManager::PipeManager() {  // NOLINT(cppcoreguidelines-pro-type-member-init)
+PipeManager::PipeManager() { // NOLINT(cppcoreguidelines-pro-type-member-init)
     this->PipeManager::setConnectedWrite(FALSE);
     this->PipeManager::setConnectedRead(FALSE);
     this->PipeManager::setPipeHandleWrite(INVALID_HANDLE_VALUE);
@@ -25,6 +26,13 @@ void PipeManager::initialize() {
     BOOL tryAgain = TRUE;
 
     LOG("Opening game pipe...");
+    /*SECURITY_ATTRIBUTES saWrite = { 0 };
+    SECURITY_ATTRIBUTES *psaWrite = nullptr; psaWrite = &saWrite;
+    saWrite.nLength = sizeof(SECURITY_ATTRIBUTES);
+    saWrite.bInheritHandle = TRUE;
+    ConvertStringSecurityDescriptorToSecurityDescriptor(
+        TEXT("S:(ML;;NWNR;;;LW)"), SDDL_REVISION_1, &saWrite.lpSecurityDescriptor, nullptr);*/
+
     while (tryAgain) {
         writeHandle = CreateNamedPipeA(
             this->getFromPipeName().c_str(), // name of the pipe
@@ -35,7 +43,7 @@ void PipeManager::initialize() {
             4096, // no outbound buffer
             4096, // no inbound buffer
             0, // use default wait time
-            nullptr // use no security attributes
+            nullptr
         );
         if (writeHandle == INVALID_HANDLE_VALUE) {
             char errstr[1024];
@@ -51,6 +59,13 @@ void PipeManager::initialize() {
         }
     }
 
+    /*SECURITY_ATTRIBUTES saRead = { 0 };
+    SECURITY_ATTRIBUTES *psaRead = nullptr; psaRead = &saRead;
+    saRead.nLength = sizeof(SECURITY_ATTRIBUTES);
+    saRead.bInheritHandle = TRUE;
+    ConvertStringSecurityDescriptorToSecurityDescriptor(
+        TEXT("S:(ML;;NWNR;;;LW)"), SDDL_REVISION_1, &saRead.lpSecurityDescriptor, nullptr);*/
+
     tryAgain = TRUE;
     while (tryAgain) {
         readHandle = CreateNamedPipeA(
@@ -63,7 +78,7 @@ void PipeManager::initialize() {
             4096, // no outbound buffer
             4096, // no inbound buffer
             0, // use default wait time
-            nullptr // use no security attributes
+            nullptr
         );
         if (readHandle == INVALID_HANDLE_VALUE) {
             char errstr[1024];
@@ -93,7 +108,7 @@ void PipeManager::shutdown() {
     this->setConnectedWrite(FALSE);
     this->setConnectedRead(FALSE);
 
-    HANDLE hPipe = CreateFile(LPCWSTR(this->getToPipeName().c_str()), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, 0, nullptr);
+    HANDLE hPipe = CreateFile(this->getToPipeName().c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, 0, nullptr);
     if (hPipe != INVALID_HANDLE_VALUE) {
         DisconnectNamedPipe(hPipe);
         CloseHandle(hPipe);
@@ -103,7 +118,7 @@ void PipeManager::shutdown() {
         this->m_readThread.join();
     }
 
-    hPipe = CreateFile(LPCWSTR(this->getFromPipeName().c_str()), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, 0, nullptr);
+    hPipe = CreateFile(this->getFromPipeName().c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, 0, nullptr);
     if (hPipe != INVALID_HANDLE_VALUE) {
         DisconnectNamedPipe(hPipe);
         CloseHandle(hPipe);
@@ -235,6 +250,12 @@ void PipeManager::readLoop() {
         LOG("Client disconnected");
 
         this->m_sendQueue.clear();
+
+        /*if (Engine::getInstance()->getCommandServer()->getConnected()) {
+            Engine::getInstance()->getCommandServer()->sendMessage(
+                TextMessage::formatNewMessage("ext_reset", "%d,", Engine::getInstance()->getId())
+            );
+        }*/
         Sleep(1);
     }
 

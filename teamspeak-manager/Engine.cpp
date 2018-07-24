@@ -1,18 +1,21 @@
 #include "Engine.h"
 #include "PipeManager.h"
+#include "Ping.h"
 #include "AssignServerGroup.h"
 #include "UnassignServerGroup.h"
 
-void Engine::initialize(IClient *client) {
+void Engine::initialize(IClient *client, IServer * commandServer) {
     if (!g_Log) {
         g_Log = static_cast<Log *>(new Log("tsm.log"));
         LOG("* Logging engine initialized.");
     }
 
     this->setClient(client);
+    //this->setCommandServer(commandServer);
     this->m_PipeManager = new PipeManager();
     this->m_ProcedureEngine = new ProcedureEngine();
 
+    this->getProcedureEngine()->addProcedure(new ping());
     this->getProcedureEngine()->addProcedure(new AssignServerGroup());
     this->getProcedureEngine()->addProcedure(new UnassignServerGroup());
 }

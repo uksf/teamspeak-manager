@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27428.2037
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "teamspeak-manager", "teamspeak-manager\teamspeak-manager.vcxproj", "{04741A69-2C9F-4353-B3C6-608DE1532EE3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "serverpipe", "serverpipe\serverpipe.vcxproj", "{C95B30C1-E013-404B-B59E-0A3693B9BB6C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -21,6 +23,14 @@ Global
 		{04741A69-2C9F-4353-B3C6-608DE1532EE3}.Release|Win32.Build.0 = Release|Win32
 		{04741A69-2C9F-4353-B3C6-608DE1532EE3}.Release|x64.ActiveCfg = Release|x64
 		{04741A69-2C9F-4353-B3C6-608DE1532EE3}.Release|x64.Build.0 = Release|x64
+		{C95B30C1-E013-404B-B59E-0A3693B9BB6C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C95B30C1-E013-404B-B59E-0A3693B9BB6C}.Debug|Win32.Build.0 = Debug|Win32
+		{C95B30C1-E013-404B-B59E-0A3693B9BB6C}.Debug|x64.ActiveCfg = Debug|x64
+		{C95B30C1-E013-404B-B59E-0A3693B9BB6C}.Debug|x64.Build.0 = Debug|x64
+		{C95B30C1-E013-404B-B59E-0A3693B9BB6C}.Release|Win32.ActiveCfg = Release|Win32
+		{C95B30C1-E013-404B-B59E-0A3693B9BB6C}.Release|Win32.Build.0 = Release|Win32
+		{C95B30C1-E013-404B-B59E-0A3693B9BB6C}.Release|x64.ActiveCfg = Release|x64
+		{C95B30C1-E013-404B-B59E-0A3693B9BB6C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

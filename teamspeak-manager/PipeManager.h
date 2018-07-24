@@ -16,6 +16,7 @@ public:
     void initialize() override;
     void shutdown() override;
     void sendMessage(IMessage * message) override;
+    void handleMessage(unsigned char *data) override { }
 
     DECLARE_MEMBER(HANDLE, PipeHandleRead)
     DECLARE_MEMBER(HANDLE, PipeHandleWrite)
