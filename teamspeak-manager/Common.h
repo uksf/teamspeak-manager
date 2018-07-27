@@ -3,7 +3,6 @@
 // ReSharper disable CppUnusedIncludeDirective
 #define _WINSOCKAPI_
 #define NOMINMAX
-#undef UNICODE
 
 #ifdef _WIN32
 #pragma warning (disable : 4100)
@@ -21,7 +20,6 @@ class IMessage;
 class IServer;
 class IProcedureFunction;
 
-static struct TS3Functions ts3Functions;
 typedef unsigned int STATE;
 typedef unsigned int ID;
 typedef struct PROCEDURE_DATA {

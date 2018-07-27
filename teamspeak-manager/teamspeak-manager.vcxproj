@@ -65,13 +65,24 @@
     <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>\projects\teamspeak\plugins\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)x32\$(Configuration)\</OutDir>
+    <IntDir>x32\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)_win32</TargetName>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)x64\$(Configuration)\</OutDir>
+    <IntDir>x64\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)_win64</TargetName>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)x32\$(Configuration)\</OutDir>
+    <IntDir>x32\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)_win32</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)x64\$(Configuration)\</OutDir>
+    <IntDir>x64\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)_win64</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -90,8 +101,8 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.dll" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I
-xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.pdb" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I</Command>
+      <Command>xcopy "$(SolutionDir)x32\Debug\teamspeak-manager_win32.dll" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I
+xcopy "$(SolutionDir)x32\Debug\teamspeak-manager_win32.pdb" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -112,8 +123,8 @@ xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.pdb" "C:\Users\Tim\AppData\Roam
       </DataExecutionPrevention>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.dll" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I
-xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.pdb" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I</Command>
+      <Command>xcopy "$(SolutionDir)x64\Debug\teamspeak-manager_win64.dll" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I
+xcopy "$(SolutionDir)x64\Debug\teamspeak-manager_win64.pdb" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -131,8 +142,8 @@ xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.pdb" "C:\Users\Tim\AppData\Roam
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.dll" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I
-xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.pdb" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I</Command>
+      <Command>xcopy "$(SolutionDir)x32\Debug\teamspeak-manager_win32.dll" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I
+xcopy "$(SolutionDir)x32\Debug\teamspeak-manager_win32.pdb" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -151,12 +162,11 @@ xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.pdb" "C:\Users\Tim\AppData\Roam
       </DataExecutionPrevention>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.dll" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I
-xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.pdb" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I</Command>
+      <Command>xcopy "$(SolutionDir)x64\Debug\teamspeak-manager_win64.dll" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I
+xcopy "$(SolutionDir)x64\Debug\teamspeak-manager_win64.pdb" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CommandServer.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="PipeManager.cpp" />
@@ -166,7 +176,6 @@ xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.pdb" "C:\Users\Tim\AppData\Roam
     <ClCompile Include="TSClient.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CommandServer.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="EntrantWorker.h" />
@@ -186,6 +195,7 @@ xcopy "$(SolutionDir)x64\Debug\teamspeak-manager.pdb" "C:\Users\Tim\AppData\Roam
     <ClInclude Include="Singleton.h" />
     <ClInclude Include="TextMessage.h" />
     <ClInclude Include="TSClient.h" />
+    <ClInclude Include="UpdateServerGroups.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

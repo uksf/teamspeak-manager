@@ -16,15 +16,14 @@ public:
     void initialize() override;
     void shutdown() override;
     void sendMessage(IMessage * message) override;
-    void handleMessage(unsigned char *data) override { }
 
     DECLARE_MEMBER(HANDLE, PipeHandleRead)
     DECLARE_MEMBER(HANDLE, PipeHandleWrite)
     DECLARE_MEMBER(BOOL, ConnectedWrite)
     DECLARE_MEMBER(BOOL, ConnectedRead)
     DECLARE_MEMBER(BOOL, ShuttingDown)
-    DECLARE_MEMBER(std::string, FromPipeName)
-    DECLARE_MEMBER(std::string, ToPipeName)
+    DECLARE_MEMBER(std::wstring, FromPipeName)
+    DECLARE_MEMBER(std::wstring, ToPipeName)
 
 public:
     BOOL getConnected() override { return (this->getConnectedRead() && this->getConnectedWrite()); }

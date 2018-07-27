@@ -49,7 +49,7 @@ IProcedureFunction* ProcedureEngine::findProcedure(char* cmd) {
 }
 
 void ProcedureEngine::runProcedure(IServer* serverInstance, IMessage* msg) {
-    return this->runProcedure(serverInstance, msg, TRUE);
+    return this->runProcedure(serverInstance, msg, FALSE);
 }
 
 void ProcedureEngine::runProcedure(IServer* serverInstance, IMessage* msg, const BOOL entrant) {

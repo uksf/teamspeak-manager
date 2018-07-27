@@ -4,8 +4,8 @@
 #include <wincon.h>
 #include <sddl.h>
 
-#define PIPE_NAME_TO "\\\\.\\pipe\\teamspeak-manager-toTS"
-#define PIPE_NAME_FROM "\\\\.\\pipe\\teamspeak-manager-fromTS"
+#define PIPE_NAME_TO L"\\\\.\\pipe\\teamspeak-manager-toTS"
+#define PIPE_NAME_FROM L"\\\\.\\pipe\\teamspeak-manager-fromTS"
 
 PipeManager::PipeManager() { // NOLINT(cppcoreguidelines-pro-type-member-init)
     this->PipeManager::setConnectedWrite(FALSE);
@@ -25,16 +25,9 @@ void PipeManager::initialize() {
     HANDLE writeHandle = nullptr, readHandle = nullptr;
     BOOL tryAgain = TRUE;
 
-    LOG("Opening game pipe...");
-    /*SECURITY_ATTRIBUTES saWrite = { 0 };
-    SECURITY_ATTRIBUTES *psaWrite = nullptr; psaWrite = &saWrite;
-    saWrite.nLength = sizeof(SECURITY_ATTRIBUTES);
-    saWrite.bInheritHandle = TRUE;
-    ConvertStringSecurityDescriptorToSecurityDescriptor(
-        TEXT("S:(ML;;NWNR;;;LW)"), SDDL_REVISION_1, &saWrite.lpSecurityDescriptor, nullptr);*/
-
+    DEBUG("Opening game pipe...");
     while (tryAgain) {
-        writeHandle = CreateNamedPipeA(
+        writeHandle = CreateNamedPipe(
             this->getFromPipeName().c_str(), // name of the pipe
             PIPE_ACCESS_DUPLEX,
             PIPE_TYPE_MESSAGE | // message-type pipe 
@@ -59,16 +52,9 @@ void PipeManager::initialize() {
         }
     }
 
-    /*SECURITY_ATTRIBUTES saRead = { 0 };
-    SECURITY_ATTRIBUTES *psaRead = nullptr; psaRead = &saRead;
-    saRead.nLength = sizeof(SECURITY_ATTRIBUTES);
-    saRead.bInheritHandle = TRUE;
-    ConvertStringSecurityDescriptorToSecurityDescriptor(
-        TEXT("S:(ML;;NWNR;;;LW)"), SDDL_REVISION_1, &saRead.lpSecurityDescriptor, nullptr);*/
-
     tryAgain = TRUE;
     while (tryAgain) {
-        readHandle = CreateNamedPipeA(
+        readHandle = CreateNamedPipe(
             this->getToPipeName().c_str(), // name of the pipe
             PIPE_ACCESS_DUPLEX,
             PIPE_TYPE_MESSAGE | // message-type pipe 
@@ -97,7 +83,7 @@ void PipeManager::initialize() {
     this->setPipeHandleRead(readHandle);
     this->setPipeHandleWrite(writeHandle);
 
-    LOG("Game pipe opening successful. [%d & %d]", this->getPipeHandleRead(), this->getPipeHandleWrite());
+    DEBUG("Game pipe opening successful. [%d & %d]", this->getPipeHandleRead(), this->getPipeHandleWrite());
 
     this->m_sendThread = std::thread(&PipeManager::sendLoop, this);
     this->m_readThread = std::thread(&PipeManager::readLoop, this);
@@ -136,11 +122,10 @@ void PipeManager::sendLoop() {
     IMessage *msg;
 
     while (!this->getShuttingDown()) {
-
         do {
             ConnectNamedPipe(this->m_PipeHandleWrite, nullptr);
             if (GetLastError() == ERROR_PIPE_CONNECTED) {
-                LOG("Client write connected");
+                DEBUG("Client write connected");
                 this->setConnectedWrite(TRUE);
                 break;
             }
@@ -155,7 +140,7 @@ void PipeManager::sendLoop() {
 
             const clock_t tick = clock() / CLOCKS_PER_SEC;
             if (tick - lastTick > PIPE_TIMEOUT / 1000) {
-                LOG("No send message for %d seconds, disconnecting", (PIPE_TIMEOUT / 1000));
+                DEBUG("No send message for %d seconds, disconnecting", (PIPE_TIMEOUT / 1000));
                 this->setConnectedWrite(FALSE);
                 break;
             }
@@ -175,7 +160,7 @@ void PipeManager::sendLoop() {
                         this->unlock();
 
                         if (!ret) {
-                            LOG("WriteFile failed, [%d]", GetLastError());
+                            DEBUG("WriteFile failed, [%d]", GetLastError());
                             if (GetLastError() == ERROR_BROKEN_PIPE) {
                                 this->setConnectedWrite(FALSE);
                             }
@@ -186,7 +171,7 @@ void PipeManager::sendLoop() {
             }
             Sleep(1);
         }
-        LOG("Write loop disconnected");
+        DEBUG("Write loop disconnected");
         FlushFileBuffers(this->m_PipeHandleWrite);
         DisconnectNamedPipe(this->m_PipeHandleWrite);
         Sleep(1);
@@ -198,12 +183,12 @@ void PipeManager::readLoop() {
 
     auto*mBuffer = static_cast<char *>(LocalAlloc(LMEM_FIXED, BUFSIZE));
     if (!mBuffer) {
-        LOG("LocalAlloc() failed: %d", GetLastError());
+        DEBUG("LocalAlloc() failed: %d", GetLastError());
     }
     while (!this->getShuttingDown()) {
         ConnectNamedPipe(this->m_PipeHandleRead, nullptr);
         if (GetLastError() == ERROR_PIPE_CONNECTED) {
-            LOG("Client read connected");
+            DEBUG("Client read connected");
             this->setConnectedRead(TRUE);
         } else {
             this->setConnectedRead(FALSE);
@@ -218,7 +203,7 @@ void PipeManager::readLoop() {
 
             const clock_t tick = clock() / CLOCKS_PER_SEC;
             if (tick - lastTick > PIPE_TIMEOUT / 100) {
-                LOG("No read message for %d seconds, disconnecting", (PIPE_TIMEOUT / 1000));
+                DEBUG("No read message for %d seconds, disconnecting", (PIPE_TIMEOUT / 1000));
                 this->setConnectedWrite(FALSE);
                 this->setConnectedRead(FALSE);
                 break;
@@ -247,15 +232,9 @@ void PipeManager::readLoop() {
         this->setConnectedRead(FALSE);
         FlushFileBuffers(this->m_PipeHandleRead);
         DisconnectNamedPipe(this->m_PipeHandleRead);
-        LOG("Client disconnected");
+        DEBUG("Client disconnected");
 
         this->m_sendQueue.clear();
-
-        /*if (Engine::getInstance()->getCommandServer()->getConnected()) {
-            Engine::getInstance()->getCommandServer()->sendMessage(
-                TextMessage::formatNewMessage("ext_reset", "%d,", Engine::getInstance()->getId())
-            );
-        }*/
         Sleep(1);
     }
 

@@ -65,10 +65,10 @@
     <ClInclude Include="UnassignServerGroup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CommandServer.h">
+    <ClInclude Include="Ping.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Ping.h">
+    <ClInclude Include="UpdateServerGroups.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -92,9 +92,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Log.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CommandServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

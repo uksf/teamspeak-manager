@@ -5,7 +5,6 @@
 #include "teamspeak/public_definitions.h"
 #include "teamspeak/public_errors.h"
 #include "TextMessage.h"
-#include "CommandServer.h"
 
 #ifdef _WIN32
 #define STRCPY(dest, destSize, src) strcpy_s(dest, destSize, src)
@@ -22,6 +21,8 @@
 #define SERVERINFO_BUFSIZE 256
 #define CHANNELINFO_BUFSIZE 512
 #define RETURNCODE_BUFSIZE 128
+
+TS3Functions ts3Functions;
 
 const char* ts3plugin_name() {
     return "Teamspeak Manager";
@@ -47,44 +48,10 @@ void ts3plugin_setFunctionPointers(const struct TS3Functions funcs) {
     ts3Functions = funcs;
 }
 
-//char *pluginID = nullptr;
-//void ts3plugin_registerPluginID(const char* commandID) {
-//    pluginID = _strdup(commandID);
-//    if (Engine::getInstance() != NULL) {
-//        if (dynamic_cast<CommandServer *>(Engine::getInstance()->getCommandServer()) != nullptr) {
-//            dynamic_cast<CommandServer *>(Engine::getInstance()->getCommandServer())->setCommandId(pluginID);
-//        }
-//    }
-//}
-//
-//void ts3plugin_onPluginCommandEvent(uint64 serverConnectionHandlerID, const char* pluginName, const char* pluginCommand) {
-//    if (pluginName && pluginCommand) {
-//        if (strstr(pluginName, "tsm") != nullptr && Engine::getInstance()->getCommandServer()) {
-//            Engine::getInstance()->getCommandServer()->handleMessage((unsigned char *)pluginCommand);
-//        }
-//    }
-//}
-
 int ts3plugin_init() {
-    Engine::getInstance()->initialize(new TSClient(), new CommandServer());
-    //if (pluginID != nullptr) dynamic_cast<CommandServer *>(Engine::getInstance()->getCommandServer())->setCommandId(pluginID);
-    if (ts3Functions.getCurrentServerConnectionHandlerID()) {
-        ts3plugin_onConnectStatusChangeEvent(ts3Functions.getCurrentServerConnectionHandlerID(), STATUS_CONNECTION_ESTABLISHED, NULL);
-    }
+    Engine::getInstance()->initialize(new TSClient());
 
     return 0;
-}
-
-void ts3plugin_onConnectStatusChangeEvent(uint64 id, const int status, unsigned int err) {
-    if (status == STATUS_CONNECTION_ESTABLISHED) {
-        if (Engine::getInstance()->getClient()->getState() != STATE_RUNNING) {
-            Engine::getInstance()->getClient()->start();
-        }
-    } else if (status == STATUS_DISCONNECTED) {
-        if (Engine::getInstance()->getClient()->getState() != STATE_STOPPED && Engine::getInstance()->getClient()->getState() != STATE_STOPPING) {
-            Engine::getInstance()->getClient()->stop();
-        }
-    }
 }
 
 void ts3plugin_shutdown() {
@@ -96,8 +63,7 @@ void ts3plugin_shutdown() {
 
 void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, const char* moveMessage) {
     if (visibility == ENTER_VISIBILITY) {
-        LOG("Client connected: %d", clientID);
-
+        DEBUG("Client connected: %d", clientID);
         char* clientUID;
         if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
             ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
@@ -105,7 +71,38 @@ void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientI
     }
 }
 
-void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, const char* uniqueClientIdentifier, uint64 clientDatabaseID) {
-    LOG("Client DBID retrieved: %d", clientDatabaseID);
-    Engine::getInstance()->getPipeManager()->sendMessage(TextMessage::formatNewMessage("CheckClientServerGroups", "%d", clientDatabaseID));
+void ts3plugin_onServerGroupClientAddedEvent(uint64 serverConnectionHandlerID, anyID clientID, const char* clientName, const char* clientUniqueIdentity, uint64 serverGroupID, anyID invokerClientID, const char* invokerName, const char* invokerUniqueIdentity) {
+    anyID selfId;
+    if (ts3Functions.getClientID(serverConnectionHandlerID, &selfId) == ERROR_ok) {
+        if (invokerClientID != selfId) {
+            DEBUG("Client server group change not invoked by me: %d", clientID);
+            char* clientUID;
+            if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
+                ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
+            }
+        }
+    }
 }
+
+void ts3plugin_onServerGroupClientDeletedEvent(uint64 serverConnectionHandlerID, anyID clientID, const char* clientName, const char* clientUniqueIdentity, uint64 serverGroupID, anyID invokerClientID, const char* invokerName, const char* invokerUniqueIdentity) {
+    anyID selfId;
+    if (ts3Functions.getClientID(serverConnectionHandlerID, &selfId) == ERROR_ok) {
+        if (invokerClientID != selfId) {
+            DEBUG("Client server group change not invoked by me: %d", clientID);
+            char* clientUID;
+            if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
+                ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
+            }
+        }
+    }
+}
+
+void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, const char* uniqueClientIdentifier, uint64 clientDatabaseID) {
+    DEBUG("Client DBID retrieved: %d", clientDatabaseID);
+    ts3Functions.requestServerGroupsByClientID(serverConnectionHandlerID, clientDatabaseID, nullptr);
+}
+
+void ts3plugin_onServerGroupByClientIDEvent(uint64 serverConnectionHandlerID, const char* name, uint64 serverGroupList, uint64 clientDatabaseID) {
+    Engine::getInstance()->getPipeManager()->sendMessage(TextMessage::formatNewMessage("CheckClientServerGroup", "%d,%d", clientDatabaseID, serverGroupList));
+}
+
