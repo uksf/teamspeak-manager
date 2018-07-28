@@ -49,6 +49,7 @@ void ts3plugin_setFunctionPointers(const struct TS3Functions funcs) {
 }
 
 int ts3plugin_init() {
+    ts3Functions.logMessage("TSM Loaded", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
     Engine::getInstance()->initialize(new TSClient());
 
     return 0;
@@ -62,8 +63,11 @@ void ts3plugin_shutdown() {
 }
 
 void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, const char* moveMessage) {
+    if (clientID == 1 || clientID == 5) return;
     if (visibility == ENTER_VISIBILITY) {
-        DEBUG("Client connected: %d", clientID);
+        char msg[1024];
+        snprintf(msg, sizeof msg, "Client connected: %d", clientID);
+        ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
         char* clientUID;
         if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
             ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
@@ -72,10 +76,13 @@ void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientI
 }
 
 void ts3plugin_onServerGroupClientAddedEvent(uint64 serverConnectionHandlerID, anyID clientID, const char* clientName, const char* clientUniqueIdentity, uint64 serverGroupID, anyID invokerClientID, const char* invokerName, const char* invokerUniqueIdentity) {
+    if (clientID == 1 || clientID == 5) return;
     anyID selfId;
     if (ts3Functions.getClientID(serverConnectionHandlerID, &selfId) == ERROR_ok) {
         if (invokerClientID != selfId) {
-            DEBUG("Client server group change not invoked by me: %d", clientID);
+            char msg[1024];
+            snprintf(msg, sizeof msg, "Client server group change not invoked by me: %d", clientID);
+            ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
             char* clientUID;
             if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
                 ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
@@ -85,10 +92,13 @@ void ts3plugin_onServerGroupClientAddedEvent(uint64 serverConnectionHandlerID, a
 }
 
 void ts3plugin_onServerGroupClientDeletedEvent(uint64 serverConnectionHandlerID, anyID clientID, const char* clientName, const char* clientUniqueIdentity, uint64 serverGroupID, anyID invokerClientID, const char* invokerName, const char* invokerUniqueIdentity) {
+    if (clientID == 1 || clientID == 5) return;
     anyID selfId;
     if (ts3Functions.getClientID(serverConnectionHandlerID, &selfId) == ERROR_ok) {
         if (invokerClientID != selfId) {
-            DEBUG("Client server group change not invoked by me: %d", clientID);
+            char msg[1024];
+            snprintf(msg, sizeof msg, "Client server group change not invoked by me: %d", clientID);
+            ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
             char* clientUID;
             if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
                 ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
@@ -98,7 +108,9 @@ void ts3plugin_onServerGroupClientDeletedEvent(uint64 serverConnectionHandlerID,
 }
 
 void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, const char* uniqueClientIdentifier, uint64 clientDatabaseID) {
-    DEBUG("Client DBID retrieved: %d", clientDatabaseID);
+    char msg[1024];
+    snprintf(msg, sizeof msg, "Client DBID retrieved: %llu", clientDatabaseID);
+    ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
     ts3Functions.requestServerGroupsByClientID(serverConnectionHandlerID, clientDatabaseID, nullptr);
 }
 

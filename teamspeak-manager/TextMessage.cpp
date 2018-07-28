@@ -1,6 +1,5 @@
 #include "TextMessage.h"
 #include "IMessage.h"
-#include "Log.h"
 #include <string>
 
 TextMessage::TextMessage(char* value, const size_t len) {
@@ -38,7 +37,6 @@ void TextMessage::parse(char* value, const size_t len) {
     for (x = 0; x < len; x++) {
         if (!__isascii(value[x]) && value[x] != 0x00) {
             this->m_IsValid = FALSE;
-            DEBUG("INVALID PACKET DETECTED l:%d", len);
         }
         if (value[x] == 0x00) break;
     }
@@ -53,7 +51,6 @@ void TextMessage::parse(char* value, const size_t len) {
     this->m_Data = new std::string(this->m_DataPtr);
     x = this->m_Data->find_first_of(":");
     if (x < 2 || x > 1000000 || x == std::string::npos) {
-        DEBUG("INVALID DATA");
         this->m_IsValid = FALSE;
         return;
     }
@@ -130,12 +127,10 @@ IMessage* TextMessage::formatNewMessage(char* procedureName, char* format, ...) 
     char buffer[TEXTMESSAGE_BUFSIZE];
     va_list va;
     if (!procedureName) {
-        DEBUG("procedureName was null");
         return nullptr;
     }
     auto* finalBuffer = static_cast<char *>(LocalAlloc(LPTR, TEXTMESSAGE_BUFSIZE));
     if (!buffer) {
-        DEBUG("LocalAlloc() failed: %d", GetLastError());
         return nullptr;
     }
     buffer[0] = 0x00;
@@ -146,7 +141,6 @@ IMessage* TextMessage::formatNewMessage(char* procedureName, char* format, ...) 
     strcat_s(finalBuffer, TEXTMESSAGE_BUFSIZE, buffer);
     auto* msg = new TextMessage(finalBuffer, strlen(finalBuffer) + 1);
     if (!msg->isValid()) {
-        DEBUG("ERR: msg was invalid");
         delete msg;
         msg = nullptr;
     }
@@ -158,12 +152,10 @@ IMessage* TextMessage::formatNewMessage(char* procedureName, char* format, ...) 
 IMessage* TextMessage::createNewMessage(char* procedureName, ...) {
     va_list va;
     if (!procedureName) {
-        DEBUG("procedureName was null");
         return nullptr;
     }
     auto* buffer = static_cast<char *>(LocalAlloc(LPTR, TEXTMESSAGE_BUFSIZE));
     if (!buffer) {
-        DEBUG("LocalAlloc() failed: %d", GetLastError());
         return nullptr;
     }
     buffer[0] = 0x00;
@@ -179,7 +171,6 @@ IMessage* TextMessage::createNewMessage(char* procedureName, ...) {
     buffer = static_cast<char *>(LocalReAlloc(buffer, strlen(buffer) + 1, LMEM_MOVEABLE));
     auto* msg = new TextMessage(buffer, strlen(buffer) + 1);
     if (!msg->isValid()) {
-        DEBUG("ERR: msg was invalid");
         delete msg;
         msg = nullptr;
     }

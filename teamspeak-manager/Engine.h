@@ -4,13 +4,12 @@
 #include "Lockable.h"
 #include "ProcedureEngine.h"
 #include "IClient.h"
-#include "Log.h"
 
 // ReSharper disable CppPossiblyUninitializedMember
 class Engine : public Singleton<Engine>, public Lockable {
 public:
-    Engine() { g_Log = nullptr; }
-    ~Engine() { DEBUG("* Destroying logging engine."); delete g_Log; }
+    Engine() = default;
+    ~Engine() = default;
 
     void initialize(IClient *client);
 

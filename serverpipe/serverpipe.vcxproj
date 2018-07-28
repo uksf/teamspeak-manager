@@ -164,6 +164,10 @@ xcopy "$(SolutionDir)x64\Debug\serverpipe.pdb" "E:\Workspace\website-backend\UKS
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="easylogging++.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="easylogging++.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

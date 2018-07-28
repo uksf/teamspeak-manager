@@ -168,7 +168,6 @@ xcopy "$(SolutionDir)x64\Debug\teamspeak-manager_win64.pdb" "C:\Users\Tim\AppDat
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp" />
-    <ClCompile Include="Log.cpp" />
     <ClCompile Include="PipeManager.cpp" />
     <ClCompile Include="Plugin.cpp" />
     <ClCompile Include="ProcedureEngine.cpp" />
@@ -184,7 +183,6 @@ xcopy "$(SolutionDir)x64\Debug\teamspeak-manager_win64.pdb" "C:\Users\Tim\AppDat
     <ClInclude Include="IProcedureFunction.h" />
     <ClInclude Include="IServer.h" />
     <ClInclude Include="Lockable.h" />
-    <ClInclude Include="Log.h" />
     <ClInclude Include="Macros.h" />
     <ClInclude Include="Ping.h" />
     <ClInclude Include="PipeManager.h" />

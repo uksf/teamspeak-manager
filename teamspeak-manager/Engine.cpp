@@ -5,12 +5,9 @@
 #include "UnassignServerGroup.h"
 #include "UpdateServerGroups.h"
 
-void Engine::initialize(IClient *client) {
-    if (!g_Log) {
-        g_Log = static_cast<Log *>(new Log("tsm.log"));
-        DEBUG("* Logging engine initialized.");
-    }
+extern TS3Functions ts3Functions;
 
+void Engine::initialize(IClient *client) {
     this->setClient(client);
     this->m_PipeManager = new PipeManager();
     this->m_ProcedureEngine = new ProcedureEngine();
@@ -24,16 +21,16 @@ void Engine::initialize(IClient *client) {
 }
 
 void Engine::start() {
-    DEBUG("Engine starting up");
+    ts3Functions.logMessage("Engine starting up", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
     if (this->getPipeManager()) {
         this->getPipeManager()->initialize();
     }
     this->setState(STATE_RUNNING);
-    DEBUG("Engine startup complte");
+    ts3Functions.logMessage("Engine startup complete", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
 }
 
 void Engine::stop() {
-    DEBUG("Engine shutting down");
+    ts3Functions.logMessage("Engine shutting down", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
     this->setState(STATE_STOPPING);
     if (this->getProcedureEngine()) {
         this->getProcedureEngine()->stopWorker();
@@ -42,5 +39,5 @@ void Engine::stop() {
         this->getPipeManager()->shutdown();
     }
     this->setState(STATE_STOPPED);
-    DEBUG("Engine shutdown complete");
+    ts3Functions.logMessage("Engine shutdown complete", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
 }
