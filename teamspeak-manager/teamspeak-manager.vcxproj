@@ -87,7 +87,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;E:\Workspace\teamspeak-manager\pluginsdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;$(SolutionDir)\pluginsdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;TEAMSPEAK_MANAGER_EXPORTS;WINDOWS;WIN32_LEAN_AND_MEAN;NOFMOD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader />
@@ -108,7 +108,7 @@ xcopy "$(SolutionDir)x32\Debug\teamspeak-manager_win32.pdb" "C:\Users\Tim\AppDat
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;E:\Workspace\teamspeak-manager\pluginsdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;$(SolutionDir)pluginsdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;TEAMSPEAK_MANAGER_EXPORTS;WINDOWS;WIN32_LEAN_AND_MEAN;NOFMOD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -134,17 +134,13 @@ xcopy "$(SolutionDir)x64\Debug\teamspeak-manager_win64.pdb" "C:\Users\Tim\AppDat
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\include;E:\Workspace\teamspeak-manager\pluginsdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;$(SolutionDir)\pluginsdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention />
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
-    <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)x32\Debug\teamspeak-manager_win32.dll" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I
-xcopy "$(SolutionDir)x32\Debug\teamspeak-manager_win32.pdb" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -154,17 +150,13 @@ xcopy "$(SolutionDir)x32\Debug\teamspeak-manager_win32.pdb" "C:\Users\Tim\AppDat
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\include;E:\Workspace\teamspeak-manager\pluginsdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;$(SolutionDir)\pluginsdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
     </Link>
-    <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)x64\Debug\teamspeak-manager_win64.dll" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I
-xcopy "$(SolutionDir)x64\Debug\teamspeak-manager_win64.pdb" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp" />
