@@ -10,6 +10,10 @@
 #define STATE_READY 5
 #define STATE_STOPPED 0xFFFFFFFF
 
+#define CLIENTUID_MODE_UNSET 0
+#define CLIENTUID_MODE_SNAPSHOT 1
+#define CLIENTUID_MODE_GROUPS 2
+
 #define STR(x) #x
 
 #define DECLARE_MEMBER_SET(type, name) \

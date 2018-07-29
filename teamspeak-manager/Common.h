@@ -14,14 +14,20 @@
 #include <string>
 #include <vector>
 #include <ts3_functions.h>
+#include <map>
+#include <optional>
 // ReSharper restore CppUnusedIncludeDirective
 
 class IMessage;
 class IServer;
 class IProcedureFunction;
 
-typedef unsigned int STATE;
 typedef unsigned int ID;
+typedef unsigned int STATE;
+typedef unsigned int CLIENTUID_MODE;
+typedef std::optional<std::pair<anyID, CLIENTUID_MODE>> CLIENTUID_MODE_PAIR;
+typedef std::map<std::string, CLIENTUID_MODE_PAIR> CLIENTUID_MODE_MAP;
+typedef std::map<uint64, std::string> CLIENTDBID_MESSAGE_MAP;
 typedef struct PROCEDURE_DATA {
     IProcedureFunction* function;
     IServer* server;

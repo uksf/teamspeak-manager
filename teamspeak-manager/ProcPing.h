@@ -5,7 +5,7 @@
 
 volatile DWORD g_pingTime;
 
-PROCEDURE_FUNCTION(ping) {
+PROCEDURE_FUNCTION(ProcPing) {
         vServer->sendMessage(TextMessage::formatNewMessage("Pong", ""));
     }
 

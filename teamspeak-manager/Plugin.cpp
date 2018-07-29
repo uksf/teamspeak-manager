@@ -29,7 +29,7 @@ const char* ts3plugin_name() {
 }
 
 const char* ts3plugin_version() {
-    return "1.0.0";
+    return "1.0.1";
 }
 
 int ts3plugin_apiVersion() {
@@ -63,44 +63,49 @@ void ts3plugin_shutdown() {
 }
 
 void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, const char* moveMessage) {
-    if (clientID == 1 || clientID == 5) return;
     if (visibility == ENTER_VISIBILITY) {
-        char msg[1024];
-        snprintf(msg, sizeof msg, "Client connected: %d", clientID);
-        ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
         char* clientUID;
         if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
+            if (Engine::getInstance()->getClient()->checkIfBlacklisted(clientUID)) return;
+            char msg[1024];
+            snprintf(msg, sizeof msg, "Client connected: %d", clientID);
+            ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+            Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{ std::pair<anyID, CLIENTUID_MODE>{ clientID, CLIENTUID_MODE_GROUPS } });
             ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
         }
     }
 }
 
-void ts3plugin_onServerGroupClientAddedEvent(uint64 serverConnectionHandlerID, anyID clientID, const char* clientName, const char* clientUniqueIdentity, uint64 serverGroupID, anyID invokerClientID, const char* invokerName, const char* invokerUniqueIdentity) {
-    if (clientID == 1 || clientID == 5) return;
+void ts3plugin_onServerGroupClientAddedEvent(uint64 serverConnectionHandlerID, anyID clientID, const char* clientName, const char* clientUniqueIdentity, uint64 serverGroupID,
+                                             anyID invokerClientID, const char* invokerName, const char* invokerUniqueIdentity) {
     anyID selfId;
     if (ts3Functions.getClientID(serverConnectionHandlerID, &selfId) == ERROR_ok) {
         if (invokerClientID != selfId) {
-            char msg[1024];
-            snprintf(msg, sizeof msg, "Client server group change not invoked by me: %d", clientID);
-            ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
             char* clientUID;
             if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
+                if (Engine::getInstance()->getClient()->checkIfBlacklisted(clientUID)) return;
+                char msg[1024];
+                snprintf(msg, sizeof msg, "Client server group change not invoked by me: %d", clientID);
+                ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+                Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{ std::pair<anyID, CLIENTUID_MODE>{ clientID, CLIENTUID_MODE_GROUPS } });
                 ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
             }
         }
     }
 }
 
-void ts3plugin_onServerGroupClientDeletedEvent(uint64 serverConnectionHandlerID, anyID clientID, const char* clientName, const char* clientUniqueIdentity, uint64 serverGroupID, anyID invokerClientID, const char* invokerName, const char* invokerUniqueIdentity) {
-    if (clientID == 1 || clientID == 5) return;
+void ts3plugin_onServerGroupClientDeletedEvent(uint64 serverConnectionHandlerID, anyID clientID, const char* clientName, const char* clientUniqueIdentity, uint64 serverGroupID,
+                                               anyID invokerClientID, const char* invokerName, const char* invokerUniqueIdentity) {
     anyID selfId;
     if (ts3Functions.getClientID(serverConnectionHandlerID, &selfId) == ERROR_ok) {
         if (invokerClientID != selfId) {
-            char msg[1024];
-            snprintf(msg, sizeof msg, "Client server group change not invoked by me: %d", clientID);
-            ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
             char* clientUID;
             if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
+                if (Engine::getInstance()->getClient()->checkIfBlacklisted(clientUID)) return;
+                char msg[1024];
+                snprintf(msg, sizeof msg, "Client server group change not invoked by me: %d", clientID);
+                ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+                Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{ std::pair<anyID, CLIENTUID_MODE>{ clientID, CLIENTUID_MODE_GROUPS } });
                 ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
             }
         }
@@ -111,10 +116,58 @@ void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, const 
     char msg[1024];
     snprintf(msg, sizeof msg, "Client DBID retrieved: %llu", clientDatabaseID);
     ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
-    ts3Functions.requestServerGroupsByClientID(serverConnectionHandlerID, clientDatabaseID, nullptr);
+
+    auto pair = Engine::getInstance()->getClientUIDMode(uniqueClientIdentifier);
+    if (!pair.has_value()) {
+        ts3Functions.logMessage("Client UID Mode pair doesn't have a value", LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+    }
+    if (pair.value().second != CLIENTUID_MODE_UNSET) {
+        switch (pair.value().second) {
+        case CLIENTUID_MODE_GROUPS:
+            ts3Functions.requestServerGroupsByClientID(serverConnectionHandlerID, clientDatabaseID, nullptr);
+            return;
+        case CLIENTUID_MODE_SNAPSHOT:
+            Engine::getInstance()->getClient()->finishSnapshotForClient(pair.value().first, clientDatabaseID);
+            return;
+        default: break;
+        }
+    }
+    ts3Functions.logMessage("Client UID not found in UID mode map, won't continue", LogLevel_INFO, "Plugin", serverConnectionHandlerID);
 }
 
 void ts3plugin_onServerGroupByClientIDEvent(uint64 serverConnectionHandlerID, const char* name, uint64 serverGroupList, uint64 clientDatabaseID) {
     Engine::getInstance()->getPipeManager()->sendMessage(TextMessage::formatNewMessage("CheckClientServerGroup", "%d,%d", clientDatabaseID, serverGroupList));
 }
+
+void ts3plugin_onClientNamefromDBIDEvent(uint64 serverConnectionHandlerID, const char* uniqueClientIdentifier, uint64 clientDatabaseID, const char* clientNickName) {
+    char msg[1024];
+    snprintf(msg, sizeof msg, "Client name from DBID retrieved: %llu, %s", clientDatabaseID, clientNickName);
+    ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+
+    auto message = Engine::getInstance()->getClientDBIDMessage(clientDatabaseID);
+    if (message.empty()) {
+        ts3Functions.logMessage("Client DBID message doesn't have a value", LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+    }
+
+    anyID* clientList;
+    if (ts3Functions.getClientList(serverConnectionHandlerID, &clientList) != ERROR_ok) {
+        return;
+    }
+    while (*clientList) {
+        const anyID clientID = *clientList;
+        clientList++;
+        char* clientUID;
+        if (ts3Functions.getClientVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
+            if (strncmp(uniqueClientIdentifier,clientUID, 100) == 0) {
+                if (ts3Functions.requestSendPrivateTextMsg(serverConnectionHandlerID, message.c_str(), clientID, nullptr) != ERROR_ok) {
+                    char emsg[1024];
+                    snprintf(emsg, sizeof emsg, "Failed to send message to %s: '%s'", clientNickName, message.c_str());
+                    ts3Functions.logMessage(emsg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+                }
+                return;
+            }
+        }
+    }
+}
+
 

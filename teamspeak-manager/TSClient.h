@@ -10,10 +10,17 @@ public:
     void stop() override;
     void start() override;
 
-    void updateServerGroups(std::vector<std::string>) override;
-    void assignServerGroup(std::vector<std::string>) override;
-    void unassignServerGroup(std::vector<std::string>) override;
+    int checkIfBlacklisted(char* name);
+
+    void procUpdateServerGroups(std::vector<std::string>) override;
+    void procAssignServerGroup(std::vector<std::string>) override;
+    void procUnassignServerGroup(std::vector<std::string>) override;
+    void procGetServerSnapshot() override;
+    void procSendMessageToClient(std::vector<std::string>) override;
+
+    void finishSnapshotForClient(anyID clientID, uint64 clientDatabaseID) override;
 
     DECLARE_MEMBER(STATE, State)
+    DECLARE_MEMBER_PRIVATE(anyID, LastSnapshotClient)
 };
 

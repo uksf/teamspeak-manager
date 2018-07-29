@@ -56,16 +56,22 @@
     <ClInclude Include="IClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AssignServerGroup.h">
+    <ClInclude Include="ProcGetServerSnapshot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UnassignServerGroup.h">
+    <ClInclude Include="ProcAssignServerGroup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Ping.h">
+    <ClInclude Include="ProcPing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UpdateServerGroups.h">
+    <ClInclude Include="ProcUnassignServerGroup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcUpdateServerGroups.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcSendMessageToClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
