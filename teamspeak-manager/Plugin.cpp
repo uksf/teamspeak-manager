@@ -70,7 +70,7 @@ void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientI
             char msg[1024];
             snprintf(msg, sizeof msg, "Client connected: %d", clientID);
             ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
-            Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{ std::pair<anyID, CLIENTUID_MODE>{ clientID, CLIENTUID_MODE_GROUPS } });
+            Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{std::pair<anyID, CLIENTUID_MODE>{clientID, CLIENTUID_MODE_GROUPS}});
             ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
         }
     }
@@ -87,7 +87,7 @@ void ts3plugin_onServerGroupClientAddedEvent(uint64 serverConnectionHandlerID, a
                 char msg[1024];
                 snprintf(msg, sizeof msg, "Client server group change not invoked by me: %d", clientID);
                 ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
-                Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{ std::pair<anyID, CLIENTUID_MODE>{ clientID, CLIENTUID_MODE_GROUPS } });
+                Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{std::pair<anyID, CLIENTUID_MODE>{clientID, CLIENTUID_MODE_GROUPS}});
                 ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
             }
         }
@@ -105,7 +105,7 @@ void ts3plugin_onServerGroupClientDeletedEvent(uint64 serverConnectionHandlerID,
                 char msg[1024];
                 snprintf(msg, sizeof msg, "Client server group change not invoked by me: %d", clientID);
                 ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
-                Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{ std::pair<anyID, CLIENTUID_MODE>{ clientID, CLIENTUID_MODE_GROUPS } });
+                Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{std::pair<anyID, CLIENTUID_MODE>{clientID, CLIENTUID_MODE_GROUPS}});
                 ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
             }
         }
@@ -120,6 +120,7 @@ void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, const 
     auto pair = Engine::getInstance()->getClientUIDMode(uniqueClientIdentifier);
     if (!pair.has_value()) {
         ts3Functions.logMessage("Client UID Mode pair doesn't have a value", LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+        return;
     }
     if (pair.value().second != CLIENTUID_MODE_UNSET) {
         switch (pair.value().second) {
@@ -158,7 +159,7 @@ void ts3plugin_onClientNamefromDBIDEvent(uint64 serverConnectionHandlerID, const
         clientList++;
         char* clientUID;
         if (ts3Functions.getClientVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
-            if (strncmp(uniqueClientIdentifier,clientUID, 100) == 0) {
+            if (strncmp(uniqueClientIdentifier, clientUID, 100) == 0) {
                 if (ts3Functions.requestSendPrivateTextMsg(serverConnectionHandlerID, message.c_str(), clientID, nullptr) != ERROR_ok) {
                     char emsg[1024];
                     snprintf(emsg, sizeof emsg, "Failed to send message to %s: '%s'", clientNickName, message.c_str());
@@ -169,5 +170,3 @@ void ts3plugin_onClientNamefromDBIDEvent(uint64 serverConnectionHandlerID, const
         }
     }
 }
-
-
