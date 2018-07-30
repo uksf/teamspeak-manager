@@ -70,16 +70,19 @@ void TSClient::procUnassignServerGroup(std::vector<std::string> args) {
 
 void TSClient::procGetServerSnapshot() {
     ts3Functions.logMessage("Getting server snapshot", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+    this->m_LastSnapshotClient = 0;
 
     anyID* clients;
     if (ts3Functions.getClientList(ts3Functions.getCurrentServerConnectionHandlerID(), &clients) != ERROR_ok) {
         ts3Functions.logMessage("Failed getting client list", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
         return;
     }
-    anyID clientID;
     while (*clients) {
-        clientID = *clients;
+        anyID clientID = *clients;
         clients++;
+        if (!*clients) {
+            this->m_LastSnapshotClient = clientID;
+        }
         char* clientUID;
         if (ts3Functions.getClientVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
             if (checkIfBlacklisted(clientUID)) continue;
@@ -91,7 +94,6 @@ void TSClient::procGetServerSnapshot() {
             ts3Functions.freeMemory(clientUID);
         }
     }
-    this->m_LastSnapshotClient = clientID;
 }
 
 void TSClient::finishSnapshotForClient(const anyID clientID, const uint64 clientDatabaseID) {
