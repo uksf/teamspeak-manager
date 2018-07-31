@@ -80,7 +80,11 @@ void TSClient::procGetServerSnapshot() {
     while (*clients) {
         anyID clientID = *clients;
         clients++;
+        char m1[1024];
+        snprintf(m1, sizeof m1, "Requesting dbid for %hu for snapshot", clientID);
+        ts3Functions.logMessage(m1, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
         if (!*clients) {
+            ts3Functions.logMessage("No more clients, setting this as the last one", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
             this->m_LastSnapshotClient = clientID;
         }
         char* clientUID;
@@ -94,6 +98,9 @@ void TSClient::procGetServerSnapshot() {
             ts3Functions.freeMemory(clientUID);
         }
     }
+    char m2[1024];
+    snprintf(m2, sizeof m2, "Snapshot request complete, last client is %hu", this->m_LastSnapshotClient);
+    ts3Functions.logMessage(m2, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
 }
 
 void TSClient::finishSnapshotForClient(const anyID clientID, const uint64 clientDatabaseID) {
