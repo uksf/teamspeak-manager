@@ -154,6 +154,4 @@ void TSClient::procShutdown() {
     this->stop();
     ts3Functions.logMessage("Disconnecting", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
     ts3Functions.stopConnection(ts3Functions.getCurrentServerConnectionHandlerID(), "Jarvis needs to reboot");
-    Sleep(2000);
-    TerminateProcess(GetCurrentProcess(), 0);
 }
