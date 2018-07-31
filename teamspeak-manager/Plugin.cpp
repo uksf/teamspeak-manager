@@ -153,6 +153,11 @@ void ts3plugin_onClientNamefromDBIDEvent(uint64 serverConnectionHandlerID, const
         ts3Functions.logMessage("Client DBID message doesn't have a value", LogLevel_INFO, "Plugin", serverConnectionHandlerID);
     }
 
+    char* selfUID;
+    if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, ts3Functions.getClientID(), CLIENT_UNIQUE_IDENTIFIER, &selfUID) != ERROR_ok) {
+        ts3Functions.logMessage("Failed to get own UID, chat tab won't close", LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+    }
+
     anyID* clientList;
     if (ts3Functions.getClientList(serverConnectionHandlerID, &clientList) != ERROR_ok) {
         return;
@@ -161,14 +166,14 @@ void ts3plugin_onClientNamefromDBIDEvent(uint64 serverConnectionHandlerID, const
         const anyID clientID = *clientList;
         clientList++;
         char* clientUID;
-        if (ts3Functions.getClientVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
+        if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
             if (strncmp(uniqueClientIdentifier, clientUID, 100) == 0) {
                 if (ts3Functions.requestSendPrivateTextMsg(serverConnectionHandlerID, message.c_str(), clientID, nullptr) != ERROR_ok) {
                     char emsg[1024];
                     snprintf(emsg, sizeof emsg, "Failed to send message to %s: '%s'", clientNickName, message.c_str());
                     ts3Functions.logMessage(emsg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
                 } else {
-                    ts3Functions.clientChatClosed(serverConnectionHandlerID, uniqueClientIdentifier, clientID, nullptr);
+                    ts3Functions.clientChatClosed(serverConnectionHandlerID, selfUID, clientID, nullptr);
                 }
                 return;
             }
