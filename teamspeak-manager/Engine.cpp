@@ -65,7 +65,7 @@ void Engine::setClientUIDMode(std::string clientUID, CLIENTUID_MODE_PAIR pair) {
 }
 
 CLIENTUID_MODE_PAIR Engine::getClientUIDMode(const std::string clientUID) {
-    if (this->m_ClientUIDModeMap.count(clientUID) == 1) {
+    if (this->m_ClientUIDModeMap.count(clientUID) >= 1) {
         const auto it = this->m_ClientUIDModeMap.find(clientUID);
         CLIENTUID_MODE_PAIR pair = it->second.value();
         this->m_ClientUIDModeMap.erase(it);
@@ -88,7 +88,7 @@ void Engine::setClientDBIDMessage(uint64 clientUID, std::string message) {
 }
 
 std::string Engine::getClientDBIDMessage(const uint64 clientUID) {
-    if (this->m_ClientDBIDMessageMap.count(clientUID) == 1) {
+    if (this->m_ClientDBIDMessageMap.count(clientUID) >= 1) {
         const auto it = this->m_ClientDBIDMessageMap.find(clientUID);
         std::string message = it->second;
         this->m_ClientDBIDMessageMap.erase(it);
