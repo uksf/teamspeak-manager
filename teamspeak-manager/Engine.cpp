@@ -6,6 +6,7 @@
 #include "ProcUpdateServerGroups.h"
 #include "ProcGetServerSnapshot.h"
 #include "ProcSendMessageToClient.h"
+#include "ProcShutdown.h"
 
 extern TS3Functions ts3Functions;
 
@@ -15,6 +16,7 @@ void Engine::initialize(IClient* client) {
     this->m_ProcedureEngine = new ProcedureEngine();
 
     this->getProcedureEngine()->addProcedure(new ProcPing());
+    this->getProcedureEngine()->addProcedure(new ProcShutdown());
     this->getProcedureEngine()->addProcedure(new ProcUpdateServerGroups());
     this->getProcedureEngine()->addProcedure(new ProcAssignServerGroup());
     this->getProcedureEngine()->addProcedure(new ProcUnassignServerGroup());

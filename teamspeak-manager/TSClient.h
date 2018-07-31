@@ -10,13 +10,14 @@ public:
     void stop() override;
     void start() override;
 
-    int checkIfBlacklisted(char* name);
+    int checkIfBlacklisted(char* name) override;
 
     void procUpdateServerGroups(std::vector<std::string>) override;
     void procAssignServerGroup(std::vector<std::string>) override;
     void procUnassignServerGroup(std::vector<std::string>) override;
     void procGetServerSnapshot() override;
     void procSendMessageToClient(std::vector<std::string>) override;
+    void procShutdown() override;
 
     void finishSnapshotForClient(anyID clientID, uint64 clientDatabaseID) override;
 

@@ -185,6 +185,7 @@ xcopy "$(SolutionDir)x64\Debug\teamspeak-manager_win64.pdb" "C:\Users\Tim\AppDat
     <ClInclude Include="ProcAssignServerGroup.h" />
     <ClInclude Include="ProcedureEngine.h" />
     <ClInclude Include="ProcSendMessageToClient.h" />
+    <ClInclude Include="ProcShutdown.h" />
     <ClInclude Include="ProcUnassignServerGroup.h" />
     <ClInclude Include="Singleton.h" />
     <ClInclude Include="TextMessage.h" />

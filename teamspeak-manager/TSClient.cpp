@@ -17,6 +17,7 @@ void TSClient::stop() {
     if (Engine::getInstance() != nullptr) {
         Engine::getInstance()->stop();
         this->setState(STATE_STOPPING);
+        this->m_LastSnapshotClient = 0;
         this->setState(STATE_STOPPED);
     }
 }
@@ -119,8 +120,12 @@ void TSClient::finishSnapshotForClient(const anyID clientID, const uint64 client
         ts3Functions.logMessage("Failed getting client name", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
         return;
     }
+    char m1[1024];
+    snprintf(m1, sizeof m1, "Sending snapshot for client %hu. Last client is %hu", clientID, this->m_LastSnapshotClient);
+    ts3Functions.logMessage(m1, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
     const int lastClient = this->m_LastSnapshotClient > 0 && this->m_LastSnapshotClient == clientID;
     if (lastClient) {
+        ts3Functions.logMessage("This is the last client", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
         this->m_LastSnapshotClient = 0;
     }
     Engine::getInstance()->getPipeManager()->sendMessage(
@@ -140,4 +145,12 @@ void TSClient::procSendMessageToClient(std::vector<std::string> args) {
         snprintf(logmsge, sizeof logmsge, "Failed to get client name from DBID %llu", clientDBID);
         ts3Functions.logMessage(logmsge, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
     }
+}
+
+void TSClient::procShutdown() {
+    this->stop();
+    ts3Functions.logMessage("Disconnecting", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+    ts3Functions.stopConnection(ts3Functions.getCurrentServerConnectionHandlerID(), "Jarvis needs to reboot");
+    Sleep(2000);
+    TerminateProcess(GetCurrentProcess(), 0);
 }
