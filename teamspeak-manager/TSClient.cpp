@@ -153,4 +153,6 @@ void TSClient::procSendMessageToClient(std::vector<std::string> args) {
 void TSClient::procShutdown() {
     ts3Functions.logMessage("Disconnecting", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
     ts3Functions.stopConnection(ts3Functions.getCurrentServerConnectionHandlerID(), "Jarvis needs to reboot");
+    Sleep(2000);
+    TerminateProcess(GetCurrentProcess(), 0);
 }
