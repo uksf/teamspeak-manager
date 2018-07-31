@@ -154,8 +154,11 @@ void ts3plugin_onClientNamefromDBIDEvent(uint64 serverConnectionHandlerID, const
     }
 
     char* selfUID;
-    if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, ts3Functions.getClientID(), CLIENT_UNIQUE_IDENTIFIER, &selfUID) != ERROR_ok) {
-        ts3Functions.logMessage("Failed to get own UID, chat tab won't close", LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+    anyID selfId;
+    if (ts3Functions.getClientID(serverConnectionHandlerID, &selfId) == ERROR_ok) {
+        if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, selfId, CLIENT_UNIQUE_IDENTIFIER, &selfUID) != ERROR_ok) {
+            ts3Functions.logMessage("Failed to get own UID, chat tab won't close", LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+        }
     }
 
     anyID* clientList;
