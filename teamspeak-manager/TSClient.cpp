@@ -92,6 +92,9 @@ void TSClient::procGetServerSnapshot() {
         if (ts3Functions.getClientVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
             if (checkIfBlacklisted(clientUID)) continue;
             Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{std::pair<anyID, CLIENTUID_MODE>{clientID, CLIENTUID_MODE_SNAPSHOT}});
+            char m3[1024];
+            snprintf(m3, sizeof m3, "Requesting dbid for %hu", clientID);
+            ts3Functions.logMessage(m3, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
             if (ts3Functions.requestClientDBIDfromUID(ts3Functions.getCurrentServerConnectionHandlerID(), clientUID, nullptr) != ERROR_ok) {
                 ts3Functions.logMessage("Failed requesting client dbid from uid", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
                 continue;
