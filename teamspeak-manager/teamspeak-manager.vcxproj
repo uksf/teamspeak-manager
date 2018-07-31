@@ -172,6 +172,7 @@ xcopy "$(SolutionDir)x64\Debug\teamspeak-manager_win64.pdb" "C:\Users\Tim\AppDat
     <ClInclude Include="Common.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="EntrantWorker.h" />
+    <ClInclude Include="ProcGetOnlineClients.h" />
     <ClInclude Include="ProcGetServerSnapshot.h" />
     <ClInclude Include="IClient.h" />
     <ClInclude Include="IMessage.h" />

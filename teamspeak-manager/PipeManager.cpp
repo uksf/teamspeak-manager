@@ -168,12 +168,12 @@ void PipeManager::sendLoop() {
             if (this->m_sendQueue.try_pop(msg)) {
                 if (msg) {
                     lastTick = clock() / CLOCKS_PER_SEC;
-                    const DWORD size = DWORD(strlen(reinterpret_cast<char *>(msg->getData()))) + 1;
+                    const DWORD size = DWORD(msg->getData().length()) + 1;
                     if (size > 3) {
                         this->lock();
                         const BOOL ret = WriteFile(
                             this->m_PipeHandleWrite,     // pipe handle 
-                            msg->getData(),                    // message 
+                            msg->getData().c_str(),                    // message 
                             size,                    // message length 
                             &cbWritten,             // bytes written 
                             nullptr);                  // not overlapped 

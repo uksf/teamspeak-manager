@@ -77,6 +77,9 @@
     <ClInclude Include="ProcShutdown.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ProcGetOnlineClients.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Plugin.cpp">

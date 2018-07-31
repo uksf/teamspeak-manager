@@ -6,7 +6,7 @@
 
 PROCEDURE_FUNCTION(ProcUpdateServerGroups) {
     const std::vector<std::string> details = {
-        std::string(reinterpret_cast<char *>(vMessage->getParameter(0))),
+        vMessage->getParameter(0),
     };
 
     Engine::getInstance()->getClient()->procUpdateServerGroups(details);

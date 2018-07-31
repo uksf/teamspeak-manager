@@ -15,16 +15,15 @@ public:
     void parse(char* value, size_t len);
     char* getProcedureName() override;
     BOOL isValid() const;
-    unsigned char* getParameter(unsigned int index) override;
+    std::string getParameter(unsigned int index) override;
     int getParameterAsInt(unsigned int index) override;
-    float getParameterAsFloat(unsigned int index) override;
     unsigned int getParameterCount() override;
 
     static IMessage* createNewMessage(char* procedureName, ...);
     static IMessage* formatNewMessage(char* procedureName, char* format, ...);
 
-    unsigned char* getData() override {
-        return reinterpret_cast<unsigned char *>(this->m_DataPtr);
+    std::string getData() override {
+        return this->m_DataPtr;
     }
 
     void setData(unsigned char* data) {

@@ -18,6 +18,7 @@ void TSClient::stop() {
         Engine::getInstance()->stop();
         this->setState(STATE_STOPPING);
         this->m_LastSnapshotClient = 0;
+        this->m_LastOnlineClient = 0;
         this->setState(STATE_STOPPED);
     }
 }
@@ -132,7 +133,7 @@ void TSClient::finishSnapshotForClient(const anyID clientID, const uint64 client
         this->m_LastSnapshotClient = 0;
     }
     Engine::getInstance()->getPipeManager()->sendMessage(
-        TextMessage::formatNewMessage("StoreServerSnapshot", "%d,%s,%d,%s,%d", clientDatabaseID, clientName, channelId, channelName, lastClient));
+        TextMessage::formatNewMessage("StoreServerSnapshot", "%d|%s|%d|%s|%d", clientDatabaseID, clientName, channelId, channelName, lastClient));
 }
 
 void TSClient::procSendMessageToClient(std::vector<std::string> args) {
@@ -148,6 +149,69 @@ void TSClient::procSendMessageToClient(std::vector<std::string> args) {
         snprintf(logmsge, sizeof logmsge, "Failed to get client name from DBID %llu", clientDBID);
         ts3Functions.logMessage(logmsge, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
     }
+}
+
+void TSClient::procGetOnlineClients() {
+    ts3Functions.logMessage("Getting online clients", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+    this->m_LastOnlineClient = 0;
+
+    anyID* clients;
+    if (ts3Functions.getClientList(ts3Functions.getCurrentServerConnectionHandlerID(), &clients) != ERROR_ok) {
+        ts3Functions.logMessage("Failed getting client list", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+        return;
+    }
+    while (*clients) {
+        anyID clientID = *clients;
+        clients++;
+        if (!*clients) {
+            ts3Functions.logMessage("No more clients, setting this as the last one", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+            this->m_LastOnlineClient = clientID;
+        }
+        char* clientUID;
+        if (ts3Functions.getClientVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
+            if (checkIfBlacklisted(clientUID)) continue;
+            Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{ std::pair<anyID, CLIENTUID_MODE>{clientID, CLIENTUID_MODE_ONLINE} });
+            char m3[1024];
+            snprintf(m3, sizeof m3, "Requesting dbid for %hu", clientID);
+            ts3Functions.logMessage(m3, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+            if (ts3Functions.requestClientDBIDfromUID(ts3Functions.getCurrentServerConnectionHandlerID(), clientUID, nullptr) != ERROR_ok) {
+                ts3Functions.logMessage("Failed requesting client dbid from uid", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+                continue;
+            }
+            ts3Functions.freeMemory(clientUID);
+        }
+    }
+    char m2[1024];
+    snprintf(m2, sizeof m2, "Snapshot request complete, last client is %hu", this->m_LastOnlineClient);
+    ts3Functions.logMessage(m2, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+}
+
+void TSClient::finishOnlineForClient(anyID clientID, uint64 clientDatabaseID) {
+    uint64 channelId;
+    if (ts3Functions.getChannelOfClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, &channelId) != ERROR_ok) {
+        ts3Functions.logMessage("Failed getting client channel", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+        return;
+    }
+    char* channelName;
+    if (ts3Functions.getChannelVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), channelId, CHANNEL_NAME, &channelName) != ERROR_ok) {
+        ts3Functions.logMessage("Failed getting channel name", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+        return;
+    }
+    char* clientName;
+    if (ts3Functions.getClientVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, CLIENT_NICKNAME, &clientName) != ERROR_ok) {
+        ts3Functions.logMessage("Failed getting client name", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+        return;
+    }
+    char m1[1024];
+    snprintf(m1, sizeof m1, "Sending client %hu. Last client is %hu", clientID, this->m_LastOnlineClient);
+    ts3Functions.logMessage(m1, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+    const int lastClient = this->m_LastOnlineClient > 0 && this->m_LastOnlineClient == clientID;
+    if (lastClient) {
+        ts3Functions.logMessage("This is the last client", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+        this->m_LastOnlineClient = 0;
+    }
+    Engine::getInstance()->getPipeManager()->sendMessage(
+        TextMessage::formatNewMessage("UpdateOnlineClients", "%d|%s|%d|%s|%d", clientDatabaseID, clientName, channelId, channelName, lastClient));
 }
 
 void TSClient::procShutdown() {

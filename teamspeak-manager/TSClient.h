@@ -17,11 +17,14 @@ public:
     void procUnassignServerGroup(std::vector<std::string>) override;
     void procGetServerSnapshot() override;
     void procSendMessageToClient(std::vector<std::string>) override;
+    void procGetOnlineClients() override;
     void procShutdown() override;
 
     void finishSnapshotForClient(anyID clientID, uint64 clientDatabaseID) override;
+    void finishOnlineForClient(anyID clientID, uint64 clientDatabaseID) override;
 
     DECLARE_MEMBER(STATE, State)
     DECLARE_MEMBER_PRIVATE(anyID, LastSnapshotClient)
+    DECLARE_MEMBER_PRIVATE(anyID, LastOnlineClient)
 };
 

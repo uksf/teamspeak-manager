@@ -130,6 +130,9 @@ void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, const 
         case CLIENTUID_MODE_SNAPSHOT:
             Engine::getInstance()->getClient()->finishSnapshotForClient(pair.value().first, clientDatabaseID);
             return;
+        case CLIENTUID_MODE_ONLINE:
+            Engine::getInstance()->getClient()->finishOnlineForClient(pair.value().first, clientDatabaseID);
+            return;
         default: break;
         }
     }
@@ -137,7 +140,7 @@ void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, const 
 }
 
 void ts3plugin_onServerGroupByClientIDEvent(uint64 serverConnectionHandlerID, const char* name, uint64 serverGroupList, uint64 clientDatabaseID) {
-    Engine::getInstance()->getPipeManager()->sendMessage(TextMessage::formatNewMessage("CheckClientServerGroup", "%d,%d", clientDatabaseID, serverGroupList));
+    Engine::getInstance()->getPipeManager()->sendMessage(TextMessage::formatNewMessage("CheckClientServerGroup", "%d|%d", clientDatabaseID, serverGroupList));
 }
 
 void ts3plugin_onClientNamefromDBIDEvent(uint64 serverConnectionHandlerID, const char* uniqueClientIdentifier, uint64 clientDatabaseID, const char* clientNickName) {

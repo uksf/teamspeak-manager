@@ -115,7 +115,9 @@ xcopy "$(SolutionDir)x64\Debug\serverpipe.pdb" "E:\Workspace\website-backend\UKS
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)x64\Debug\serverpipe.dll" "E:\Workspace\website-backend\UKSFWebsite.Server\bin\Debug\netcoreapp2.0\win7-x64" /Y /I
-xcopy "$(SolutionDir)x64\Debug\serverpipe.pdb" "E:\Workspace\website-backend\UKSFWebsite.Server\bin\Debug\netcoreapp2.0\win7-x64" /Y /I</Command>
+xcopy "$(SolutionDir)x64\Debug\serverpipe.pdb" "E:\Workspace\website-backend\UKSFWebsite.Server\bin\Debug\netcoreapp2.0\win7-x64" /Y /I
+xcopy "$(SolutionDir)x64\Debug\serverpipe.dll" "E:\Workspace\website-backend\UKSFWebsite.Server\bin\Debug\netcoreapp2.0" /Y /I
+xcopy "$(SolutionDir)x64\Debug\serverpipe.pdb" "E:\Workspace\website-backend\UKSFWebsite.Server\bin\Debug\netcoreapp2.0" /Y /I</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

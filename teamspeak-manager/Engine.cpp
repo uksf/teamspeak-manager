@@ -7,6 +7,7 @@
 #include "ProcGetServerSnapshot.h"
 #include "ProcSendMessageToClient.h"
 #include "ProcShutdown.h"
+#include "ProcGetOnlineClients.h"
 
 extern TS3Functions ts3Functions;
 
@@ -22,6 +23,7 @@ void Engine::initialize(IClient* client) {
     this->getProcedureEngine()->addProcedure(new ProcUnassignServerGroup());
     this->getProcedureEngine()->addProcedure(new ProcGetServerSnapshot());
     this->getProcedureEngine()->addProcedure(new ProcSendMessageToClient());
+    this->getProcedureEngine()->addProcedure(new ProcGetOnlineClients());
 
     this->getClient()->start();
 }
