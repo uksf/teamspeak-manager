@@ -167,6 +167,8 @@ void ts3plugin_onClientNamefromDBIDEvent(uint64 serverConnectionHandlerID, const
                     char emsg[1024];
                     snprintf(emsg, sizeof emsg, "Failed to send message to %s: '%s'", clientNickName, message.c_str());
                     ts3Functions.logMessage(emsg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+                } else {
+                    ts3Functions.clientChatClosed(serverConnectionHandlerID, uniqueClientIdentifier, clientID, nullptr);
                 }
                 return;
             }
