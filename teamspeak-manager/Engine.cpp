@@ -310,12 +310,13 @@ void Engine::sendServerSnapshot() {
     LOCK(this);
     for (auto iterator = this->m_UIDMap.begin(); iterator != this->m_UIDMap.end(); ++iterator) {
         const auto value = iterator->second;
-        if (value.clientID == UNSET_ANYID) continue;
-        const int lastClient = std::next(iterator) == this->m_UIDMap.end() ? 1 : 0;
-        this->getPipeManager()->sendMessage(
-            TextMessage::formatNewMessage(const_cast<char*>("StoreServerSnapshot"), const_cast<char*>("%d|%s|%d|%s|%d"), value.clientDBID, value.clientName.c_str(),
-                                          value.channelID,
-                                          value.channelName.c_str(), lastClient));
+        if (value.clientID != UNSET_ANYID) {
+            const int lastClient = std::next(iterator) == this->m_UIDMap.end() ? 1 : 0;
+            this->getPipeManager()->sendMessage(
+                TextMessage::formatNewMessage(const_cast<char*>("StoreServerSnapshot"), const_cast<char*>("%d|%s|%d|%s|%d"), value.clientDBID, value.clientName.c_str(),
+                                              value.channelID,
+                                              value.channelName.c_str(), lastClient));
+        }
     }
     UNLOCK(this);
 }
@@ -325,7 +326,6 @@ void Engine::sendOnlineClients() {
     for (auto iterator = this->m_UIDMap.begin(); iterator != this->m_UIDMap.end(); ++iterator) {
         const auto value = iterator->second;
         if (value.clientID != UNSET_ANYID) {
-            logTSMessage("Online client ID %d", value.clientID);
             const int lastClient = std::next(iterator) == this->m_UIDMap.end() ? 1 : 0;
             this->getPipeManager()->sendMessage(
                 TextMessage::formatNewMessage(const_cast<char*>("UpdateOnlineClients"), const_cast<char*>("%d|%s|%d|%s|%d"), value.clientDBID, value.clientName.c_str(),
