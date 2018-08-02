@@ -3,8 +3,6 @@
 #include "TSClient.h"
 #include "IServer.h"
 #include "teamspeak/public_definitions.h"
-#include "teamspeak/public_errors.h"
-#include "TextMessage.h"
 
 #ifdef _WIN32
 #define STRCPY(dest, destSize, src) strcpy_s(dest, destSize, src)
@@ -29,7 +27,7 @@ const char* ts3plugin_name() {
 }
 
 const char* ts3plugin_version() {
-    return "1.0.1";
+    return "1.1.0";
 }
 
 int ts3plugin_apiVersion() {
@@ -49,10 +47,26 @@ void ts3plugin_setFunctionPointers(const struct TS3Functions funcs) {
 }
 
 int ts3plugin_init() {
-    ts3Functions.logMessage("TSM Loaded", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+    logTSMessage("TSM Loaded");
     Engine::getInstance()->initialize(new TSClient());
+    if (ts3Functions.getCurrentServerConnectionHandlerID()) {
+        ts3plugin_onConnectStatusChangeEvent(ts3Functions.getCurrentServerConnectionHandlerID(), STATUS_CONNECTION_ESTABLISHED, NULL);
+    }
 
     return 0;
+}
+
+void ts3plugin_onConnectStatusChangeEvent(uint64 id, int status, unsigned int err) {
+    if (status == STATUS_CONNECTION_ESTABLISHED) {
+        ts3Functions.requestChannelSubscribeAll(ts3Functions.getCurrentServerConnectionHandlerID(), nullptr);
+        if (Engine::getInstance()->getClient()->getState() != STATE_RUNNING) {
+            Engine::getInstance()->getClient()->start();
+        }
+    } else if (status == STATUS_DISCONNECTED) {
+        if (Engine::getInstance()->getClient()->getState() != STATE_STOPPED && Engine::getInstance()->getClient()->getState() != STATE_STOPPING) {
+            Engine::getInstance()->getClient()->stop();
+        }
+    }
 }
 
 void ts3plugin_shutdown() {
@@ -62,124 +76,36 @@ void ts3plugin_shutdown() {
     Engine::getInstance()->stop();
 }
 
-void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, const char* moveMessage) {
-    if (visibility == ENTER_VISIBILITY) {
-        char* clientUID;
-        if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
-            if (Engine::getInstance()->getClient()->checkIfBlacklisted(clientUID)) return;
-            char msg[1024];
-            snprintf(msg, sizeof msg, "Client connected: %d", clientID);
-            ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
-            Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{std::pair<anyID, CLIENTUID_MODE>{clientID, CLIENTUID_MODE_GROUPS}});
-            ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
-        }
-    }
-}
-
-void ts3plugin_onServerGroupClientAddedEvent(uint64 serverConnectionHandlerID, anyID clientID, const char* clientName, const char* clientUniqueIdentity, uint64 serverGroupID,
-                                             anyID invokerClientID, const char* invokerName, const char* invokerUniqueIdentity) {
-    anyID selfId;
-    if (ts3Functions.getClientID(serverConnectionHandlerID, &selfId) == ERROR_ok) {
-        if (invokerClientID != selfId) {
-            char* clientUID;
-            if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
-                if (Engine::getInstance()->getClient()->checkIfBlacklisted(clientUID)) return;
-                char msg[1024];
-                snprintf(msg, sizeof msg, "Client server group change not invoked by me: %d", clientID);
-                ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
-                Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{std::pair<anyID, CLIENTUID_MODE>{clientID, CLIENTUID_MODE_GROUPS}});
-                ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
-            }
-        }
-    }
-}
-
-void ts3plugin_onServerGroupClientDeletedEvent(uint64 serverConnectionHandlerID, anyID clientID, const char* clientName, const char* clientUniqueIdentity, uint64 serverGroupID,
-                                               anyID invokerClientID, const char* invokerName, const char* invokerUniqueIdentity) {
-    anyID selfId;
-    if (ts3Functions.getClientID(serverConnectionHandlerID, &selfId) == ERROR_ok) {
-        if (invokerClientID != selfId) {
-            char* clientUID;
-            if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
-                if (Engine::getInstance()->getClient()->checkIfBlacklisted(clientUID)) return;
-                char msg[1024];
-                snprintf(msg, sizeof msg, "Client server group change not invoked by me: %d", clientID);
-                ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
-                Engine::getInstance()->setClientUIDMode(clientUID, CLIENTUID_MODE_PAIR{std::pair<anyID, CLIENTUID_MODE>{clientID, CLIENTUID_MODE_GROUPS}});
-                ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID, nullptr);
-            }
-        }
-    }
-}
-
 void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, const char* uniqueClientIdentifier, uint64 clientDatabaseID) {
-    char msg[1024];
-    snprintf(msg, sizeof msg, "Client DBID retrieved: %llu", clientDatabaseID);
-    ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+    logTSMessage("Client DBID retrieved: %llu", clientDatabaseID);
 
-    auto pair = Engine::getInstance()->getClientUIDMode(uniqueClientIdentifier);
-    if (!pair.has_value()) {
-        ts3Functions.logMessage("Client UID Mode pair doesn't have a value", LogLevel_INFO, "Plugin", serverConnectionHandlerID);
+    // add dbid to dbid map, and set in uid map
+    const std::string clientUID(uniqueClientIdentifier);
+    Engine::getInstance()->updateOrSetDBIDMapValue(clientDatabaseID, clientUID);
+    Engine::getInstance()->updateOrSetUIDMapValue(clientUID, clientDatabaseID, NULL_ANYID, "", NULL_UINT, "");
+
+    // pop queue and handle
+    const DBID_QUEUE_MODE callback = Engine::getInstance()->getFromCallbackQueue(clientUID);
+    if (callback == DBID_QUEUE_MODE_UNSET) {
+        logTSMessage("No callback to handle in DBID queue for UID %s", clientUID.c_str());
         return;
     }
-    if (pair.value().second != CLIENTUID_MODE_UNSET) {
-        switch (pair.value().second) {
-        case CLIENTUID_MODE_GROUPS:
-            ts3Functions.requestServerGroupsByClientID(serverConnectionHandlerID, clientDatabaseID, nullptr);
-            return;
-        case CLIENTUID_MODE_SNAPSHOT:
-            Engine::getInstance()->getClient()->finishSnapshotForClient(pair.value().first, clientDatabaseID);
-            return;
-        case CLIENTUID_MODE_ONLINE:
-            Engine::getInstance()->getClient()->finishOnlineForClient(pair.value().first, clientDatabaseID);
-            return;
-        default: break;
-        }
-    }
-    ts3Functions.logMessage("Client UID not found in UID mode map, won't continue", LogLevel_INFO, "Plugin", serverConnectionHandlerID);
-}
-
-void ts3plugin_onServerGroupByClientIDEvent(uint64 serverConnectionHandlerID, const char* name, uint64 serverGroupList, uint64 clientDatabaseID) {
-    Engine::getInstance()->getPipeManager()->sendMessage(TextMessage::formatNewMessage("CheckClientServerGroup", "%d|%d", clientDatabaseID, serverGroupList));
-}
-
-void ts3plugin_onClientNamefromDBIDEvent(uint64 serverConnectionHandlerID, const char* uniqueClientIdentifier, uint64 clientDatabaseID, const char* clientNickName) {
-    char msg[1024];
-    snprintf(msg, sizeof msg, "Client name from DBID retrieved: %llu, %s", clientDatabaseID, clientNickName);
-    ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
-
-    auto message = Engine::getInstance()->getClientDBIDMessage(clientDatabaseID);
-    if (message.empty()) {
-        ts3Functions.logMessage("Client DBID message doesn't have a value", LogLevel_INFO, "Plugin", serverConnectionHandlerID);
-    }
-
-    char* selfUID;
-    anyID selfId;
-    if (ts3Functions.getClientID(serverConnectionHandlerID, &selfId) == ERROR_ok) {
-        if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, selfId, CLIENT_UNIQUE_IDENTIFIER, &selfUID) != ERROR_ok) {
-            ts3Functions.logMessage("Failed to get own UID, chat tab won't close", LogLevel_INFO, "Plugin", serverConnectionHandlerID);
-        }
-    }
-
-    anyID* clientList;
-    if (ts3Functions.getClientList(serverConnectionHandlerID, &clientList) != ERROR_ok) {
+    const auto mapUIDValue = Engine::getInstance()->getUIDMapValue(clientUID);
+    switch (callback) {
+    case DBID_QUEUE_MODE_GROUPS:
+        logTSMessage("Found Groups callback to handle");
+        ts3Functions.requestServerGroupsByClientID(serverConnectionHandlerID, mapUIDValue.clientDBID, nullptr);
         return;
+    default: break;
     }
-    while (*clientList) {
-        const anyID clientID = *clientList;
-        clientList++;
-        char* clientUID;
-        if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) == ERROR_ok) {
-            if (strncmp(uniqueClientIdentifier, clientUID, 100) == 0) {
-                if (ts3Functions.requestSendPrivateTextMsg(serverConnectionHandlerID, message.c_str(), clientID, nullptr) != ERROR_ok) {
-                    char emsg[1024];
-                    snprintf(emsg, sizeof emsg, "Failed to send message to %s: '%s'", clientNickName, message.c_str());
-                    ts3Functions.logMessage(emsg, LogLevel_INFO, "Plugin", serverConnectionHandlerID);
-                } else {
-                    ts3Functions.clientChatClosed(serverConnectionHandlerID, selfUID, clientID, nullptr);
-                }
-                return;
-            }
-        }
-    }
+    logTSMessage("Invalid callback mode");
+}
+
+void logTSMessage(char const* format, ...) {
+    char message[1024];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(message, sizeof message, format, args);
+    ts3Functions.logMessage(message, LogLevel_INFO, "TSM", ts3Functions.getCurrentServerConnectionHandlerID());
+    va_end(args);
 }

@@ -115,7 +115,7 @@ xcopy "$(SolutionDir)x32\Debug\teamspeak-manager_win32.pdb" "C:\Users\Tim\AppDat
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -164,6 +164,9 @@ xcopy "$(SolutionDir)x64\Debug\teamspeak-manager_win64.pdb" "C:\Users\Tim\AppDat
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="PipeManager.cpp" />
     <ClCompile Include="Plugin.cpp" />
+    <ClCompile Include="PluginChannelEvents.cpp" />
+    <ClCompile Include="PluginClientEvents.cpp" />
+    <ClCompile Include="PluginServerGroupEvents.cpp" />
     <ClCompile Include="ProcedureEngine.cpp" />
     <ClCompile Include="TextMessage.cpp" />
     <ClCompile Include="TSClient.cpp" />

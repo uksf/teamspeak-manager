@@ -10,10 +10,14 @@
 #define STATE_READY 5
 #define STATE_STOPPED 0xFFFFFFFF
 
-#define CLIENTUID_MODE_UNSET 0
-#define CLIENTUID_MODE_SNAPSHOT 1
-#define CLIENTUID_MODE_GROUPS 2
-#define CLIENTUID_MODE_ONLINE 3
+#define DBID_QUEUE_MODE_UNSET 0
+#define DBID_QUEUE_MODE_SNAPSHOT 1
+#define DBID_QUEUE_MODE_GROUPS 2
+#define DBID_QUEUE_MODE_ONLINE 3
+
+#define NULL_ANYID (short)0
+#define UNSET_ANYID SHRT_MIN
+#define NULL_UINT 0llu
 
 #define STR(x) #x
 
@@ -55,4 +59,3 @@ public: \
     name##(){ this->m_Name = STR(name); } \
     ~##name(){ } \
     void call(IServer *vServer, IMessage *vMessage)
-

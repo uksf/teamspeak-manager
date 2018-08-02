@@ -16,18 +16,35 @@ public:
     void start();
     void stop();
 
-    void setClientUIDMode(std::string clientUID, CLIENTUID_MODE_PAIR pair);
-    CLIENTUID_MODE_PAIR getClientUIDMode(std::string clientUID);
+    MAP_UID_VALUE getUIDMapValue(MAP_UID_KEY key);
+    void updateOrSetUIDMapValue(MAP_UID_KEY key, uint64 newDBID, anyID newClientID, std::string newClientName, uint64 newChannelID, std::string newChannelName);
+    void updateUIDMapChannelName(uint64 channelID, std::string newChannelName);
+    void deleteUIDMapValue(MAP_UID_KEY key);
 
-    void setClientDBIDMessage(uint64 clientUID, std::string message);
-    std::string getClientDBIDMessage(uint64 clientUID);
+    MAP_DBID_VALUE getDBIDMapValue(MAP_DBID_KEY key);
+    void updateOrSetDBIDMapValue(MAP_DBID_KEY key, std::string newClientUID);
+    void deleteDBIDMapValue(MAP_DBID_KEY key);
+
+    MAP_ID_VALUE getIDMapValue(MAP_ID_KEY key);
+    void updateOrSetIDMapValue(MAP_ID_KEY key, std::string newClientUID);
+    void deleteIDMapValue(MAP_ID_KEY key);
+
+    void addToCallbackQueue(MAP_UID_KEY key, DBID_QUEUE_MODE mode);
+    DBID_QUEUE_MODE getFromCallbackQueue(MAP_UID_KEY key);
+
+    void sendServerSnapshot();
+    void sendOnlineClients();
 
     DECLARE_MEMBER(IServer *, PipeManager)
     DECLARE_MEMBER(ProcedureEngine *, ProcedureEngine)
     DECLARE_MEMBER(IClient *, Client)
     DECLARE_MEMBER(STATE, State)
-    DECLARE_MEMBER_PRIVATE(CLIENTUID_MODE_MAP, ClientUIDModeMap)
-    DECLARE_MEMBER_PRIVATE(CLIENTDBID_MESSAGE_MAP, ClientDBIDMessageMap)
+
+    DECLARE_MEMBER_PRIVATE(MAP_UID, UIDMap)
+    DECLARE_MEMBER_PRIVATE(MAP_DBID, DBIDMap)
+    DECLARE_MEMBER_PRIVATE(MAP_ID, IDMap)
+
+    DBID_QUEUE m_DBIDCallbackQueue;
 };
 // ReSharper restore CppPossiblyUninitializedMember
 

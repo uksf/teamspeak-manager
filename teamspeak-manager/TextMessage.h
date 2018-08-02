@@ -30,10 +30,6 @@ public:
         this->parse(reinterpret_cast<char *>(data), strlen(reinterpret_cast<char*>(data)));
     }
 
-    unsigned int getLength() override {
-        return this->m_Data->length();
-    }
-
 private:
     std::string* m_Data{};
     std::string* m_RpcProcedureName;

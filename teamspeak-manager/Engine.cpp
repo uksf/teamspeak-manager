@@ -24,23 +24,22 @@ void Engine::initialize(IClient* client) {
     this->getProcedureEngine()->addProcedure(new ProcGetServerSnapshot());
     this->getProcedureEngine()->addProcedure(new ProcSendMessageToClient());
     this->getProcedureEngine()->addProcedure(new ProcGetOnlineClients());
-
-    this->getClient()->start();
 }
 
 void Engine::start() {
-    ts3Functions.logMessage("Engine starting up", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+    logTSMessage("Engine starting up");
+    this->m_UIDMap.clear();
+    this->m_DBIDMap.clear();
+    this->m_IDMap.clear();
     if (this->getPipeManager()) {
         this->getPipeManager()->initialize();
     }
-    this->m_ClientUIDModeMap.clear();
-    this->m_ClientDBIDMessageMap.clear();
     this->setState(STATE_RUNNING);
-    ts3Functions.logMessage("Engine startup complete", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+    logTSMessage("Engine startup complete");
 }
 
 void Engine::stop() {
-    ts3Functions.logMessage("Engine shutting down", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+    logTSMessage("Engine shutting down");
     this->setState(STATE_STOPPING);
     if (this->getProcedureEngine()) {
         this->getProcedureEngine()->stopWorker();
@@ -48,54 +47,179 @@ void Engine::stop() {
     if (this->getPipeManager()) {
         this->getPipeManager()->shutdown();
     }
-    this->m_ClientUIDModeMap.clear();
-    this->m_ClientDBIDMessageMap.clear();
+    this->m_UIDMap.clear();
+    this->m_DBIDMap.clear();
+    this->m_IDMap.clear();
     this->setState(STATE_STOPPED);
-    ts3Functions.logMessage("Engine shutdown complete", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+    logTSMessage("Engine shutdown complete");
 }
 
-void Engine::setClientUIDMode(std::string clientUID, CLIENTUID_MODE_PAIR pair) {
-    if (this->m_ClientUIDModeMap.count(clientUID) == 0) {
-        this->m_ClientUIDModeMap.emplace(clientUID, pair);
+MAP_UID_VALUE Engine::getUIDMapValue(MAP_UID_KEY key) {
+    LOCK(this);
+    const auto iterator = this->m_UIDMap.find(key);
+    if (iterator != this->m_UIDMap.end()) {
+        UNLOCK(this);
+        return iterator->second;
+    }
+    UNLOCK(this);
+    return MAP_UID_VALUE{};
+}
+
+void Engine::updateOrSetUIDMapValue(MAP_UID_KEY key, uint64 newDBID, anyID newClientID, std::string newClientName, uint64 newChannelID, std::string newChannelName) {
+    LOCK(this);
+    const auto iterator = this->m_UIDMap.find(key);
+    if (iterator != this->m_UIDMap.end()) {
+        logTSMessage("Updating client UID %s", key.c_str());
+        if (newDBID != NULL_UINT) {
+            iterator->second.clientDBID = newDBID;
+        }
+        if (newClientID != NULL_ANYID) {
+            iterator->second.clientID = newClientID;
+        }
+        if (!newClientName.empty()) {
+            iterator->second.clientName = newClientName;
+        }
+        if (newChannelID != NULL_UINT) {
+            iterator->second.channelID = newChannelID;
+        }
+        if (!newChannelName.empty()) {
+            iterator->second.channelName = newChannelName;
+        }
     } else {
-        char logmsg[1024];
-        snprintf(logmsg, sizeof logmsg, "ClientUID mode already set as %d for %s", pair.value().second, clientUID.c_str());
-        ts3Functions.logMessage(logmsg, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+        logTSMessage("Emplacing client UID %s", key.c_str());
+        this->m_UIDMap.emplace(key, MAP_UID_VALUE{ MAP_UID_VALUE(newDBID, newClientID, newClientName, newChannelID, newChannelName)});
     }
+    UNLOCK(this);
 }
 
-CLIENTUID_MODE_PAIR Engine::getClientUIDMode(const std::string clientUID) {
-    if (this->m_ClientUIDModeMap.count(clientUID) >= 1) {
-        const auto it = this->m_ClientUIDModeMap.find(clientUID);
-        CLIENTUID_MODE_PAIR pair = it->second.value();
-        this->m_ClientUIDModeMap.erase(it);
-        return pair;
+void Engine::updateUIDMapChannelName(uint64 channelID, std::string newChannelName) {
+    LOCK(this);
+    for (auto iterator = this->m_UIDMap.begin(); iterator != this->m_UIDMap.end(); ++iterator) {
+        auto value = iterator->second;
+        if (value.channelID == channelID) {
+            logTSMessage("Channel edited, updating name for: %s", iterator->first.c_str());
+            value.channelName = newChannelName;
+        }
     }
-    char logmsg[1024];
-    snprintf(logmsg, sizeof logmsg, "ClientUID mode not found for %s", clientUID.c_str());
-    ts3Functions.logMessage(logmsg, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
-    return {};
+    UNLOCK(this);
 }
 
-void Engine::setClientDBIDMessage(uint64 clientUID, std::string message) {
-    if (this->m_ClientDBIDMessageMap.count(clientUID) == 0) {
-        this->m_ClientDBIDMessageMap.emplace(clientUID, message);
-    } else {
-        char logmsg[1024];
-        snprintf(logmsg, sizeof logmsg, "ClientDBID message already set for %llu as %s", clientUID, message.c_str());
-        ts3Functions.logMessage(logmsg, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+void Engine::deleteUIDMapValue(MAP_UID_KEY key) {
+    LOCK(this);
+    const auto iterator = this->m_UIDMap.find(key);
+    if (iterator != this->m_UIDMap.end()) {
+        this->m_UIDMap.erase(iterator);
     }
+    UNLOCK(this);
 }
 
-std::string Engine::getClientDBIDMessage(const uint64 clientUID) {
-    if (this->m_ClientDBIDMessageMap.count(clientUID) >= 1) {
-        const auto it = this->m_ClientDBIDMessageMap.find(clientUID);
-        std::string message = it->second;
-        this->m_ClientDBIDMessageMap.erase(it);
-        return message;
+MAP_DBID_VALUE Engine::getDBIDMapValue(MAP_DBID_KEY key) {
+    LOCK(this);
+    const auto iterator = this->m_DBIDMap.find(key);
+    if (iterator != this->m_DBIDMap.end()) {
+        UNLOCK(this);
+        return iterator->second;
     }
-    char logmsg[1024];
-    snprintf(logmsg, sizeof logmsg, "ClientDBID mode not found for %llu", clientUID);
-    ts3Functions.logMessage(logmsg, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+    UNLOCK(this);
     return "";
+}
+
+void Engine::updateOrSetDBIDMapValue(MAP_DBID_KEY key, std::string newClientUID) {
+    LOCK(this);
+    const auto iterator = this->m_DBIDMap.find(key);
+    if (iterator != this->m_DBIDMap.end()) {
+        logTSMessage("Updating client DBID %llu for %s", key, newClientUID.c_str());
+        if (!newClientUID.empty()) {
+            iterator->second = newClientUID;
+        }
+    } else {
+        logTSMessage("Emplacing client DBID %llu for %s", key, newClientUID.c_str());
+        this->m_DBIDMap.emplace(key, newClientUID);
+    }
+    UNLOCK(this);
+}
+
+void Engine::deleteDBIDMapValue(MAP_DBID_KEY key) {
+    LOCK(this);
+    const auto iterator = this->m_DBIDMap.find(key);
+    if (iterator != this->m_DBIDMap.end()) {
+        this->m_DBIDMap.erase(iterator);
+    }
+    UNLOCK(this);
+}
+
+MAP_ID_VALUE Engine::getIDMapValue(MAP_ID_KEY key) {
+    LOCK(this);
+    const auto iterator = this->m_IDMap.find(key);
+    if (iterator != this->m_IDMap.end()) {
+        UNLOCK(this);
+        return iterator->second;
+    }
+    UNLOCK(this);
+    return "";
+}
+
+void Engine::updateOrSetIDMapValue(MAP_ID_KEY key, std::string newClientUID) {
+    LOCK(this);
+    const auto iterator = this->m_IDMap.find(key);
+    if (iterator != this->m_IDMap.end()) {
+        logTSMessage("Emplacing client ID %d", key);
+        if (!newClientUID.empty()) {
+            iterator->second = newClientUID;
+        }
+    } else {
+        logTSMessage("Emplacing client ID %d", key);
+        this->m_IDMap.emplace(key, newClientUID);
+    }
+    UNLOCK(this);
+}
+
+void Engine::deleteIDMapValue(MAP_ID_KEY key) {
+    LOCK(this);
+    const auto iterator = this->m_IDMap.find(key);
+    if (iterator != this->m_IDMap.end()) {
+        this->m_IDMap.erase(iterator);
+    }
+    UNLOCK(this);
+}
+
+void Engine::addToCallbackQueue(MAP_UID_KEY key, DBID_QUEUE_MODE mode) {
+    LOCK(this);
+    this->m_DBIDCallbackQueue.emplace(key, mode);
+    UNLOCK(this);
+}
+
+DBID_QUEUE_MODE Engine::getFromCallbackQueue(MAP_UID_KEY key) {
+    LOCK(this);
+    const auto iterator = this->m_DBIDCallbackQueue.find(key);
+    if (iterator != this->m_DBIDCallbackQueue.end()) {
+        UNLOCK(this);
+        return iterator->second;
+    }
+    UNLOCK(this);
+    return DBID_QUEUE_MODE_UNSET;
+}
+
+void Engine::sendServerSnapshot() {
+    LOCK(this);
+    for (auto iterator = this->m_UIDMap.begin(); iterator != this->m_UIDMap.end(); ++iterator) {
+        const auto value = iterator->second;
+        const int lastClient = std::next(iterator) == this->m_UIDMap.end() ? 1 : 0;
+        this->getPipeManager()->sendMessage(
+            TextMessage::formatNewMessage(const_cast<char*>("StoreServerSnapshot"), const_cast<char*>("%d|%s|%d|%s|%d"), value.clientDBID, value.clientName.c_str(), value.channelID,
+                                          value.channelName.c_str(), lastClient));
+    }
+    UNLOCK(this);
+}
+
+void Engine::sendOnlineClients() {
+    LOCK(this);
+    for (auto iterator = this->m_UIDMap.begin(); iterator != this->m_UIDMap.end(); ++iterator) {
+        const auto value = iterator->second;
+        const int lastClient = std::next(iterator) == this->m_UIDMap.end() ? 1 : 0;
+        this->getPipeManager()->sendMessage(
+            TextMessage::formatNewMessage(const_cast<char*>("UpdateOnlineClients"), const_cast<char*>("%d|%s|%d|%s|%d"), value.clientDBID, value.clientName.c_str(), value.channelID,
+                                          value.channelName.c_str(), lastClient));
+    }
+    UNLOCK(this);
 }

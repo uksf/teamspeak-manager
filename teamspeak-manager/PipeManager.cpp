@@ -34,7 +34,7 @@ void PipeManager::initialize() {
     ConvertStringSecurityDescriptorToSecurityDescriptor(
         TEXT("S:(ML;;NWNR;;;LW)"), SDDL_REVISION_1, &saWrite.lpSecurityDescriptor, nullptr);
 
-    ts3Functions.logMessage("Opening game pipe...", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+    logTSMessage("Opening game pipe...");
     while (tryAgain) {
         writeHandle = CreateNamedPipe(
             this->getFromPipeName().c_str(), // name of the pipe
@@ -99,9 +99,7 @@ void PipeManager::initialize() {
     this->setPipeHandleRead(readHandle);
     this->setPipeHandleWrite(writeHandle);
 
-    char msg[1024];
-    snprintf(msg, sizeof msg, "Game pipe opening successful. [%d & %d]", this->getPipeHandleRead(), this->getPipeHandleWrite());
-    ts3Functions.logMessage(msg, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+    logTSMessage("Game pipe opening successful. [%d & %d]", this->getPipeHandleRead(), this->getPipeHandleWrite());
 
     this->m_sendThread = std::thread(&PipeManager::sendLoop, this);
     this->m_readThread = std::thread(&PipeManager::readLoop, this);
@@ -143,7 +141,7 @@ void PipeManager::sendLoop() {
         do {
             ConnectNamedPipe(this->m_PipeHandleWrite, nullptr);
             if (GetLastError() == ERROR_PIPE_CONNECTED) {
-                ts3Functions.logMessage("Client write connected", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+                logTSMessage("Client write connected");
                 this->setConnectedWrite(TRUE);
                 break;
             }
@@ -158,9 +156,7 @@ void PipeManager::sendLoop() {
 
             const clock_t tick = clock() / CLOCKS_PER_SEC;
             if (tick - lastTick > PIPE_TIMEOUT / 1000) {
-                char logmsg[1024];
-                snprintf(logmsg, sizeof logmsg, "No send message for %d seconds, disconnecting", PIPE_TIMEOUT / 1000);
-                ts3Functions.logMessage(logmsg, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+                logTSMessage("No send message for %d seconds, disconnecting", PIPE_TIMEOUT / 1000);
                 this->setConnectedWrite(FALSE);
                 break;
             }
@@ -180,9 +176,7 @@ void PipeManager::sendLoop() {
                         this->unlock();
 
                         if (!ret) {
-                            char logmsg[1024];
-                            snprintf(logmsg, sizeof logmsg, "WriteFile failed %lu", GetLastError());
-                            ts3Functions.logMessage(logmsg, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+                            logTSMessage("WriteFile failed %lu", GetLastError());
                             if (GetLastError() == ERROR_BROKEN_PIPE) {
                                 this->setConnectedWrite(FALSE);
                             }
@@ -193,7 +187,7 @@ void PipeManager::sendLoop() {
             }
             Sleep(1);
         }
-        ts3Functions.logMessage("Write loop disconnected", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+        logTSMessage("Write loop disconnected");
         FlushFileBuffers(this->m_PipeHandleWrite);
         DisconnectNamedPipe(this->m_PipeHandleWrite);
         Sleep(1);
@@ -205,15 +199,13 @@ void PipeManager::readLoop() {
 
     auto* mBuffer = static_cast<char *>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, BUFSIZE));
     if (!mBuffer) {
-        char logmsg[1024];
-        snprintf(logmsg, sizeof logmsg, "LocalAlloc() failed:  %lu", GetLastError());
-        ts3Functions.logMessage(logmsg, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+        logTSMessage("LocalAlloc() failed:  %lu", GetLastError());
     }
 
     while (!this->getShuttingDown()) {
         ConnectNamedPipe(this->m_PipeHandleRead, nullptr);
         if (GetLastError() == ERROR_PIPE_CONNECTED) {
-            ts3Functions.logMessage("Client read connected", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+            logTSMessage("Client read connected");
             this->setConnectedRead(TRUE);
         } else {
             this->setConnectedRead(FALSE);
@@ -228,9 +220,7 @@ void PipeManager::readLoop() {
 
             const clock_t tick = clock() / CLOCKS_PER_SEC;
             if (tick - lastTick > PIPE_TIMEOUT / 1000) {
-                char logmsg[1024];
-                snprintf(logmsg, sizeof logmsg, "No send message for %d seconds, disconnecting", PIPE_TIMEOUT / 1000);
-                ts3Functions.logMessage(logmsg, LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+                logTSMessage("No send message for %d seconds, disconnecting", PIPE_TIMEOUT / 1000);
                 this->setConnectedWrite(FALSE);
                 this->setConnectedRead(FALSE);
                 break;
@@ -259,7 +249,7 @@ void PipeManager::readLoop() {
         this->setConnectedRead(FALSE);
         FlushFileBuffers(this->m_PipeHandleRead);
         DisconnectNamedPipe(this->m_PipeHandleRead);
-        ts3Functions.logMessage("Client disconnected", LogLevel_INFO, "Plugin", ts3Functions.getCurrentServerConnectionHandlerID());
+        logTSMessage("Client disconnected");
 
         this->m_sendQueue.clear();
         Sleep(1);
