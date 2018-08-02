@@ -1,3 +1,5 @@
+#include <teamspeak/public_errors.h>
+#include "Plugin.h"
 #include "Engine.h"
 #include "PipeManager.h"
 #include "ProcPing.h"
@@ -8,8 +10,7 @@
 #include "ProcSendMessageToClient.h"
 #include "ProcShutdown.h"
 #include "ProcGetOnlineClients.h"
-#include <teamspeak/public_errors.h>
-#include "Plugin.h"
+#include "ProcInitaliseClientMaps.h"
 
 extern TS3Functions ts3Functions;
 
@@ -19,6 +20,7 @@ void Engine::initialize(IClient* client) {
     this->m_ProcedureEngine = new ProcedureEngine();
 
     this->getProcedureEngine()->addProcedure(new ProcPing());
+    this->getProcedureEngine()->addProcedure(new ProcInitaliseClientMaps());
     this->getProcedureEngine()->addProcedure(new ProcShutdown());
     this->getProcedureEngine()->addProcedure(new ProcUpdateServerGroups());
     this->getProcedureEngine()->addProcedure(new ProcAssignServerGroup());
@@ -192,7 +194,7 @@ void Engine::updateOrSetUIDMapValue(MAP_UID_KEY key, uint64 newDBID, anyID newCl
         }
     } else {
         logTSMessage("Emplacing client UID %s", key.c_str());
-        this->m_UIDMap.emplace(key, MAP_UID_VALUE{ MAP_UID_VALUE(newDBID, newClientID, newClientName, newChannelID, newChannelName)});
+        this->m_UIDMap.emplace(key, MAP_UID_VALUE{MAP_UID_VALUE(newDBID, newClientID, newClientName, newChannelID, newChannelName)});
     }
     UNLOCK(this);
 }
@@ -312,7 +314,8 @@ void Engine::sendServerSnapshot() {
         if (value.clientID == UNSET_ANYID) continue;
         const int lastClient = std::next(iterator) == this->m_UIDMap.end() ? 1 : 0;
         this->getPipeManager()->sendMessage(
-            TextMessage::formatNewMessage(const_cast<char*>("StoreServerSnapshot"), const_cast<char*>("%d|%s|%d|%s|%d"), value.clientDBID, value.clientName.c_str(), value.channelID,
+            TextMessage::formatNewMessage(const_cast<char*>("StoreServerSnapshot"), const_cast<char*>("%d|%s|%d|%s|%d"), value.clientDBID, value.clientName.c_str(),
+                                          value.channelID,
                                           value.channelName.c_str(), lastClient));
     }
     UNLOCK(this);
@@ -325,7 +328,8 @@ void Engine::sendOnlineClients() {
         if (value.clientID == UNSET_ANYID) continue;
         const int lastClient = std::next(iterator) == this->m_UIDMap.end() ? 1 : 0;
         this->getPipeManager()->sendMessage(
-            TextMessage::formatNewMessage(const_cast<char*>("UpdateOnlineClients"), const_cast<char*>("%d|%s|%d|%s|%d"), value.clientDBID, value.clientName.c_str(), value.channelID,
+            TextMessage::formatNewMessage(const_cast<char*>("UpdateOnlineClients"), const_cast<char*>("%d|%s|%d|%s|%d"), value.clientDBID, value.clientName.c_str(),
+                                          value.channelID,
                                           value.channelName.c_str(), lastClient));
     }
     UNLOCK(this);
