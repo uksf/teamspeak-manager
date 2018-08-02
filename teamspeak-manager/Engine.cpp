@@ -14,6 +14,7 @@
 extern TS3Functions ts3Functions;
 
 void Engine::initaliseClientMaps() {
+    logTSMessage("Initialising client list");
     anyID* clients;
     if (ts3Functions.getClientList(ts3Functions.getCurrentServerConnectionHandlerID(), &clients) != ERROR_ok) {
         logTSMessage("Failed getting client list");
@@ -21,6 +22,7 @@ void Engine::initaliseClientMaps() {
     }
     while (*clients) {
         const anyID clientID = *clients;
+        logTSMessage("Found client %d", clientID);
         clients++;
         uint64 channelID;
         ts3Functions.getChannelOfClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, &channelID);
