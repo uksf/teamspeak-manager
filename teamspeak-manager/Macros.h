@@ -16,7 +16,7 @@
 #define DBID_QUEUE_MODE_ONLINE 3
 
 #define NULL_ANYID (short)0
-#define UNSET_ANYID SHRT_MIN
+#define UNSET_ANYID SHRT_MAX
 #define NULL_UINT 0llu
 
 #define STR(x) #x
