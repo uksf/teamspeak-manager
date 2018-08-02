@@ -26,6 +26,7 @@ void Engine::initaliseClientMaps() {
         clients++;
         uint64 channelID;
         ts3Functions.getChannelOfClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, &channelID);
+        logTSMessage("in channel %llu", channelID);
         ts3plugin_onClientMoveEvent(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, 0, channelID, ENTER_VISIBILITY, nullptr);
     }
 }
