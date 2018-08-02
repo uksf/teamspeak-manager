@@ -8,8 +8,25 @@
 #include "ProcSendMessageToClient.h"
 #include "ProcShutdown.h"
 #include "ProcGetOnlineClients.h"
+#include <teamspeak/public_errors.h>
+#include "Plugin.h"
 
 extern TS3Functions ts3Functions;
+
+void initaliseClientMaps() {
+    anyID* clients;
+    if (ts3Functions.getClientList(ts3Functions.getCurrentServerConnectionHandlerID(), &clients) != ERROR_ok) {
+        logTSMessage("Failed getting client list");
+        return;
+    }
+    while (*clients) {
+        const anyID clientID = *clients;
+        clients++;
+        uint64 channelID;
+        ts3Functions.getChannelOfClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, &channelID);
+        ts3plugin_onClientMoveEvent(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, 0, channelID, ENTER_VISIBILITY, nullptr);
+    }
+}
 
 void Engine::initialize(IClient* client) {
     this->setClient(client);
@@ -34,6 +51,7 @@ void Engine::start() {
     if (this->getPipeManager()) {
         this->getPipeManager()->initialize();
     }
+    initaliseClientMaps();
     this->setState(STATE_RUNNING);
     logTSMessage("Engine startup complete");
 }

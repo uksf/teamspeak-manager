@@ -7,24 +7,8 @@ extern TS3Functions ts3Functions;
 
 #define INVALID_TS3_CHANNEL (-1)
 
-void initaliseClientMaps() {
-    anyID* clients;
-    if (ts3Functions.getClientList(ts3Functions.getCurrentServerConnectionHandlerID(), &clients) != ERROR_ok) {
-        logTSMessage("Failed getting client list");
-        return;
-    }
-    while (*clients) {
-        const anyID clientID = *clients;
-        clients++;
-        uint64 channelID;
-        ts3Functions.getChannelOfClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, &channelID);
-        ts3plugin_onClientMoveEvent(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, 0, channelID, ENTER_VISIBILITY, nullptr);
-    }
-}
-
 void TSClient::start() {
     Engine::getInstance()->start();
-    initaliseClientMaps();
     this->setState(STATE_RUNNING);
 }
 
