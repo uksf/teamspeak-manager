@@ -13,7 +13,7 @@
 
 extern TS3Functions ts3Functions;
 
-void initaliseClientMaps() {
+void Engine::initaliseClientMaps() {
     anyID* clients;
     if (ts3Functions.getClientList(ts3Functions.getCurrentServerConnectionHandlerID(), &clients) != ERROR_ok) {
         logTSMessage("Failed getting client list");
@@ -51,7 +51,7 @@ void Engine::start() {
     if (this->getPipeManager()) {
         this->getPipeManager()->initialize();
     }
-    initaliseClientMaps();
+    this->initaliseClientMaps();
     this->setState(STATE_RUNNING);
     logTSMessage("Engine startup complete");
 }

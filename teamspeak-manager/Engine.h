@@ -45,6 +45,9 @@ public:
     DECLARE_MEMBER_PRIVATE(MAP_ID, IDMap)
 
     DBID_QUEUE m_DBIDCallbackQueue;
+
+private:
+    static void initaliseClientMaps();
 };
 // ReSharper restore CppPossiblyUninitializedMember
 
