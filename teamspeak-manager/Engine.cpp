@@ -13,24 +13,6 @@
 
 extern TS3Functions ts3Functions;
 
-void Engine::initaliseClientMaps() {
-    logTSMessage("Initialising client list");
-    anyID* clients;
-    if (ts3Functions.getClientList(ts3Functions.getCurrentServerConnectionHandlerID(), &clients) != ERROR_ok) {
-        logTSMessage("Failed getting client list");
-        return;
-    }
-    while (*clients) {
-        const anyID clientID = *clients;
-        logTSMessage("Found client %d", clientID);
-        clients++;
-        uint64 channelID;
-        ts3Functions.getChannelOfClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, &channelID);
-        logTSMessage("in channel %llu", channelID);
-        ts3plugin_onClientMoveEvent(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, 0, channelID, ENTER_VISIBILITY, nullptr);
-    }
-}
-
 void Engine::initialize(IClient* client) {
     this->setClient(client);
     this->m_PipeManager = new PipeManager();
@@ -73,6 +55,109 @@ void Engine::stop() {
     this->m_IDMap.clear();
     this->setState(STATE_STOPPED);
     logTSMessage("Engine shutdown complete");
+}
+
+void Engine::initaliseClientMaps() {
+    logTSMessage("Initialising client list");
+    anyID* clients;
+    if (ts3Functions.getClientList(ts3Functions.getCurrentServerConnectionHandlerID(), &clients) != ERROR_ok) {
+        logTSMessage("Failed getting client list");
+        return;
+    }
+    while (*clients) {
+        const anyID clientID = *clients;
+        logTSMessage("Found client %d", clientID);
+        clients++;
+        uint64 channelID;
+        ts3Functions.getChannelOfClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, &channelID);
+        logTSMessage("in channel %llu", channelID);
+        this->handleClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, 0, channelID, ENTER_VISIBILITY);
+    }
+}
+
+std::string Engine::getClientUID(uint64 serverConnectionHandlerID, anyID clientID) {
+    char* clientUID;
+    std::string clientUIDString = this->getIDMapValue(clientID);
+    if (clientUIDString.empty()) {
+        if (ts3Functions.getClientVariableAsString(serverConnectionHandlerID, clientID, CLIENT_UNIQUE_IDENTIFIER, &clientUID) != ERROR_ok) {
+            logTSMessage("Failed to get client UID: %d. Won't continue", clientID);
+            return "";
+        }
+        if (this->getClient()->checkIfBlacklisted(clientUID)) return "";
+        logTSMessage("Client UID not found in ID map, setting %d as %s", clientID, clientUID);
+        this->updateOrSetIDMapValue(clientID, clientUID);
+    } else {
+        logTSMessage("Client UID found in ID map, getting %d as %s", clientID, clientUIDString.c_str());
+        return clientUIDString;
+    }
+    return clientUID;
+}
+
+void Engine::updateClientChannel(uint64 serverConnectionHandlerID, std::string clientUID, uint64 newChannelID) {
+    char* channelName;
+    if (ts3Functions.getChannelVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), newChannelID, CHANNEL_NAME, &channelName) != ERROR_ok) {
+        logTSMessage("Failed getting channel name");
+        return;
+    }
+    this->updateOrSetUIDMapValue(clientUID, NULL_UINT, NULL_ANYID, "", newChannelID, channelName);
+}
+
+void Engine::handleClient(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility) {
+    // connected
+    // store clientID, UID, clientName, channelID, channelName
+    // add UID to DBID event queue in server group check mode
+    // request DBID
+
+    // move
+    // update channelID and channelName
+    // check we have DBID
+
+    // disconnected
+    // unset clientID and channelID
+
+    std::string clientUID = getClientUID(serverConnectionHandlerID, clientID);
+    if (clientUID.empty()) return;
+
+    switch (visibility) {
+    case ENTER_VISIBILITY: {
+        logTSMessage("Client joined: %d", clientID);
+        char* clientName;
+        if (ts3Functions.getClientVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, CLIENT_NICKNAME, &clientName) != ERROR_ok) {
+            logTSMessage("Failed getting client name");
+            return;
+        }
+        this->updateOrSetUIDMapValue(clientUID, NULL_UINT, clientID, clientName, newChannelID, "");
+        updateClientChannel(serverConnectionHandlerID, clientUID, newChannelID);
+        this->addToCallbackQueue(clientUID, DBID_QUEUE_MODE_GROUPS);
+        ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID.c_str(), nullptr);
+        break;
+    }
+    case RETAIN_VISIBILITY: {
+        logTSMessage("Client moved: %d", clientID);
+        char* clientName;
+        if (ts3Functions.getClientVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, CLIENT_NICKNAME, &clientName) != ERROR_ok) {
+            logTSMessage("Failed getting client name");
+            return;
+        }
+        this->updateOrSetUIDMapValue(clientUID, NULL_UINT, clientID, clientName, newChannelID, "");
+        updateClientChannel(serverConnectionHandlerID, clientUID, newChannelID);
+        const auto value = this->getUIDMapValue(clientUID);
+        if (value.clientDBID == NULL_UINT) {
+            logTSMessage("No DBID stored in UID map for: %s", clientUID.c_str());
+            ts3Functions.requestClientDBIDfromUID(serverConnectionHandlerID, clientUID.c_str(), nullptr);
+        } else {
+            logTSMessage("DBID found in UID map for: %s", clientUID.c_str());
+        }
+        break;
+    }
+    case LEAVE_VISIBILITY: {
+        logTSMessage("Client left: %d, unsetting uid %s", clientID, clientUID.c_str());
+        this->updateOrSetUIDMapValue(clientUID, NULL_UINT, UNSET_ANYID, "", NULL_UINT, "");
+        break;
+    }
+    default:
+        logTSMessage("Visibility error", clientID);
+    }
 }
 
 MAP_UID_VALUE Engine::getUIDMapValue(MAP_UID_KEY key) {

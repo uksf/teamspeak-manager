@@ -16,6 +16,10 @@ public:
     void start();
     void stop();
 
+    std::string getClientUID(uint64 serverConnectionHandlerID, anyID clientID);
+    void updateClientChannel(uint64 serverConnectionHandlerID, std::string clientUID, uint64 newChannelID);
+    void handleClient(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility);
+
     MAP_UID_VALUE getUIDMapValue(MAP_UID_KEY key);
     void updateOrSetUIDMapValue(MAP_UID_KEY key, uint64 newDBID, anyID newClientID, std::string newClientName, uint64 newChannelID, std::string newChannelName);
     void updateUIDMapChannelName(uint64 channelID, std::string newChannelName);
@@ -47,7 +51,7 @@ public:
     DBID_QUEUE m_DBIDCallbackQueue;
 
 private:
-    static void initaliseClientMaps();
+    void initaliseClientMaps();
 };
 // ReSharper restore CppPossiblyUninitializedMember
 
