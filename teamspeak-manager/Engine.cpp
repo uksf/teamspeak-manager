@@ -67,11 +67,9 @@ void Engine::initaliseClientMaps() {
     }
     while (*clients) {
         const anyID clientID = *clients;
-        logTSMessage("Found client %d", clientID);
         clients++;
         uint64 channelID;
         ts3Functions.getChannelOfClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, &channelID);
-        logTSMessage("in channel %llu", channelID);
         this->handleClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, channelID, ENTER_VISIBILITY);
     }
 }
@@ -154,6 +152,7 @@ void Engine::handleClient(uint64 serverConnectionHandlerID, anyID clientID, uint
     case LEAVE_VISIBILITY: {
         logTSMessage("Client left: %d, unsetting uid %s", clientID, clientUID.c_str());
         this->updateOrSetUIDMapValue(clientUID, NULL_UINT, UNSET_ANYID, "", NULL_UINT, "");
+        this->deleteIDMapValue(clientID);
         break;
     }
     default:
@@ -325,6 +324,7 @@ void Engine::sendOnlineClients() {
     LOCK(this);
     for (auto iterator = this->m_UIDMap.begin(); iterator != this->m_UIDMap.end(); ++iterator) {
         const auto value = iterator->second;
+        logTSMessage("Online? client ID %d", value.clientID);
         if (value.clientID == UNSET_ANYID) continue;
         const int lastClient = std::next(iterator) == this->m_UIDMap.end() ? 1 : 0;
         this->getPipeManager()->sendMessage(
