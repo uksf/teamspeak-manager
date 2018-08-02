@@ -36,7 +36,6 @@ void Engine::start() {
     if (this->getPipeManager()) {
         this->getPipeManager()->initialize();
     }
-    this->initaliseClientMaps();
     this->setState(STATE_RUNNING);
     logTSMessage("Engine startup complete");
 }
@@ -71,7 +70,7 @@ void Engine::initaliseClientMaps() {
         uint64 channelID;
         ts3Functions.getChannelOfClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, &channelID);
         logTSMessage("in channel %llu", channelID);
-        this->handleClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, 0, channelID, ENTER_VISIBILITY);
+        this->handleClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, channelID, ENTER_VISIBILITY);
     }
 }
 
@@ -102,7 +101,7 @@ void Engine::updateClientChannel(uint64 serverConnectionHandlerID, std::string c
     this->updateOrSetUIDMapValue(clientUID, NULL_UINT, NULL_ANYID, "", newChannelID, channelName);
 }
 
-void Engine::handleClient(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility) {
+void Engine::handleClient(uint64 serverConnectionHandlerID, anyID clientID, uint64 newChannelID, int visibility) {
     // connected
     // store clientID, UID, clientName, channelID, channelName
     // add UID to DBID event queue in server group check mode

@@ -7,7 +7,7 @@
 extern TS3Functions ts3Functions;
 
 void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, const char* moveMessage) {
-    Engine::getInstance()->handleClient(serverConnectionHandlerID, clientID, oldChannelID, newChannelID, visibility);
+    Engine::getInstance()->handleClient(serverConnectionHandlerID, clientID, newChannelID, visibility);
 }
 
 void ts3plugin_onClientMoveMovedEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, anyID moverID,

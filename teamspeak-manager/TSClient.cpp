@@ -26,6 +26,10 @@ int TSClient::checkIfBlacklisted(char* name) {
     return 0;
 }
 
+void TSClient::procInitaliseClientMaps() {
+    Engine::getInstance()->initaliseClientMaps();
+}
+
 void TSClient::procUpdateServerGroups(std::vector<std::string> args) {
     const uint64 clientDBID = std::stoul(args.at(0));
 

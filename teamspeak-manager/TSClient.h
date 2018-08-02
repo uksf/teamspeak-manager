@@ -12,6 +12,7 @@ public:
 
     int checkIfBlacklisted(char* name) override;
 
+    void procInitaliseClientMaps() override;
     void procUpdateServerGroups(std::vector<std::string>) override;
     void procAssignServerGroup(std::vector<std::string>) override;
     void procUnassignServerGroup(std::vector<std::string>) override;
