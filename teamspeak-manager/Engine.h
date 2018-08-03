@@ -20,6 +20,7 @@ public:
     void updateClientChannel(uint64 serverConnectionHandlerID, std::string clientUID, uint64 newChannelID);
     void handleClient(uint64 serverConnectionHandlerID, anyID clientID, uint64 newChannelID, int visibility);
     void initaliseClientMaps();
+    void sendClientsUpdate();
 
     MAP_UID_VALUE getUIDMapValue(MAP_UID_KEY key);
     void updateOrSetUIDMapValue(MAP_UID_KEY key, uint64 newDBID, anyID newClientID, std::string newClientName, uint64 newChannelID, std::string newChannelName);
@@ -36,9 +37,6 @@ public:
 
     void addToCallbackQueue(MAP_UID_KEY key, DBID_QUEUE_MODE mode);
     DBID_QUEUE_MODE getFromCallbackQueue(MAP_UID_KEY key);
-
-    void sendServerSnapshot();
-    void sendOnlineClients();
 
     DECLARE_MEMBER(IServer *, PipeManager)
     DECLARE_MEMBER(ProcedureEngine *, ProcedureEngine)

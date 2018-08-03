@@ -56,9 +56,6 @@
     <ClInclude Include="IClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ProcGetServerSnapshot.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ProcAssignServerGroup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -75,9 +72,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ProcShutdown.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ProcGetOnlineClients.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ProcInitaliseClientMaps.h">

@@ -59,11 +59,6 @@ void TSClient::procUnassignServerGroup(std::vector<std::string> args) {
     }
 }
 
-void TSClient::procGetServerSnapshot() {
-    logTSMessage("Sending server snapshot");
-    Engine::getInstance()->sendServerSnapshot();
-}
-
 void TSClient::procSendMessageToClient(std::vector<std::string> args) {
     const uint64 clientDBID = std::stoull(args.at(0));
     const std::string message = args.at(1);
@@ -80,11 +75,6 @@ void TSClient::procSendMessageToClient(std::vector<std::string> args) {
     } else {
         logTSMessage("Client UID not found in DBID map %llu, assuming offline", clientDBID);
     }
-}
-
-void TSClient::procGetOnlineClients() {
-    logTSMessage("Getting online clients");
-    Engine::getInstance()->sendOnlineClients();
 }
 
 void TSClient::procShutdown() {

@@ -16,9 +16,7 @@ public:
     void procUpdateServerGroups(std::vector<std::string>) override;
     void procAssignServerGroup(std::vector<std::string>) override;
     void procUnassignServerGroup(std::vector<std::string>) override;
-    void procGetServerSnapshot() override;
     void procSendMessageToClient(std::vector<std::string>) override;
-    void procGetOnlineClients() override;
     void procShutdown() override;
 
     DECLARE_MEMBER(STATE, State)

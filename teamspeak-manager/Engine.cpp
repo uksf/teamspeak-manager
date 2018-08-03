@@ -1,16 +1,14 @@
 #include <teamspeak/public_errors.h>
-#include "Plugin.h"
 #include "Engine.h"
 #include "PipeManager.h"
 #include "ProcPing.h"
 #include "ProcAssignServerGroup.h"
 #include "ProcUnassignServerGroup.h"
 #include "ProcUpdateServerGroups.h"
-#include "ProcGetServerSnapshot.h"
 #include "ProcSendMessageToClient.h"
 #include "ProcShutdown.h"
-#include "ProcGetOnlineClients.h"
 #include "ProcInitaliseClientMaps.h"
+#include <sstream>
 
 extern TS3Functions ts3Functions;
 
@@ -25,9 +23,7 @@ void Engine::initialize(IClient* client) {
     this->getProcedureEngine()->addProcedure(new ProcUpdateServerGroups());
     this->getProcedureEngine()->addProcedure(new ProcAssignServerGroup());
     this->getProcedureEngine()->addProcedure(new ProcUnassignServerGroup());
-    this->getProcedureEngine()->addProcedure(new ProcGetServerSnapshot());
     this->getProcedureEngine()->addProcedure(new ProcSendMessageToClient());
-    this->getProcedureEngine()->addProcedure(new ProcGetOnlineClients());
 }
 
 void Engine::start() {
@@ -99,6 +95,7 @@ void Engine::updateClientChannel(uint64 serverConnectionHandlerID, std::string c
         return;
     }
     this->updateOrSetUIDMapValue(clientUID, NULL_UINT, NULL_ANYID, "", newChannelID, channelName);
+    this->sendClientsUpdate();
 }
 
 void Engine::handleClient(uint64 serverConnectionHandlerID, anyID clientID, uint64 newChannelID, int visibility) {
@@ -158,6 +155,8 @@ void Engine::handleClient(uint64 serverConnectionHandlerID, anyID clientID, uint
     default:
         logTSMessage("Visibility error", clientID);
     }
+
+    this->sendClientsUpdate();
 }
 
 MAP_UID_VALUE Engine::getUIDMapValue(MAP_UID_KEY key) {
@@ -207,6 +206,7 @@ void Engine::updateUIDMapChannelName(uint64 channelID, std::string newChannelNam
             value.channelName = newChannelName;
         }
     }
+    this->sendClientsUpdate();
     UNLOCK(this);
 }
 
@@ -306,32 +306,21 @@ DBID_QUEUE_MODE Engine::getFromCallbackQueue(MAP_UID_KEY key) {
     return DBID_QUEUE_MODE_UNSET;
 }
 
-void Engine::sendServerSnapshot() {
+void Engine::sendClientsUpdate() {
     LOCK(this);
+    std::ostringstream stringStream;
+    stringStream << "{\"clients\":[";
     for (auto iterator = this->m_UIDMap.begin(); iterator != this->m_UIDMap.end(); ++iterator) {
+        if (iterator != this->m_UIDMap.begin()) {
+            stringStream << ",";
+        }
         const auto value = iterator->second;
         if (value.clientID != UNSET_ANYID) {
-            const int lastClient = std::next(iterator) == this->m_UIDMap.end() ? 1 : 0;
-            this->getPipeManager()->sendMessage(
-                TextMessage::formatNewMessage(const_cast<char*>("StoreServerSnapshot"), const_cast<char*>("%d|%s|%d|%s|%d"), value.clientDBID, value.clientName.c_str(),
-                                              value.channelID,
-                                              value.channelName.c_str(), lastClient));
+            stringStream << R"({"clientDBID":")" << value.clientDBID << R"(","clientName":")" << value.clientName << R"(","channelID":")" << value.channelID <<
+                R"(","channelName":")" << value.channelName << "\"}";
         }
     }
-    UNLOCK(this);
-}
-
-void Engine::sendOnlineClients() {
-    LOCK(this);
-    for (auto iterator = this->m_UIDMap.begin(); iterator != this->m_UIDMap.end(); ++iterator) {
-        const auto value = iterator->second;
-        if (value.clientID != UNSET_ANYID) {
-            const int lastClient = std::next(iterator) == this->m_UIDMap.end() ? 1 : 0;
-            this->getPipeManager()->sendMessage(
-                TextMessage::formatNewMessage(const_cast<char*>("UpdateOnlineClients"), const_cast<char*>("%d|%s|%d|%s|%d"), value.clientDBID, value.clientName.c_str(),
-                                              value.channelID,
-                                              value.channelName.c_str(), lastClient));
-        }
-    }
+    stringStream << "]}";
+    this->getPipeManager()->sendMessage(TextMessage::formatNewMessage(const_cast<char*>("SendClientsUpdate"), const_cast<char*>("%s"), stringStream.str().c_str()));
     UNLOCK(this);
 }
