@@ -207,6 +207,7 @@ void PipeManager::readLoop() {
         if (GetLastError() == ERROR_PIPE_CONNECTED) {
             logTSMessage("Client read connected");
             this->setConnectedRead(TRUE);
+            Engine::getInstance()->initaliseClientMaps();
         } else {
             this->setConnectedRead(FALSE);
             Sleep(1);
@@ -225,8 +226,6 @@ void PipeManager::readLoop() {
                 this->setConnectedRead(FALSE);
                 break;
             }
-
-            Engine::getInstance()->initaliseClientMaps();
 
             BOOL ret;
             do {
