@@ -7,7 +7,6 @@
 #include "ProcUpdateServerGroups.h"
 #include "ProcSendMessageToClient.h"
 #include "ProcShutdown.h"
-#include "ProcInitaliseClientMaps.h"
 #include <sstream>
 
 extern TS3Functions ts3Functions;
@@ -18,7 +17,6 @@ void Engine::initialize(IClient* client) {
     this->m_ProcedureEngine = new ProcedureEngine();
 
     this->getProcedureEngine()->addProcedure(new ProcPing());
-    this->getProcedureEngine()->addProcedure(new ProcInitaliseClientMaps());
     this->getProcedureEngine()->addProcedure(new ProcShutdown());
     this->getProcedureEngine()->addProcedure(new ProcUpdateServerGroups());
     this->getProcedureEngine()->addProcedure(new ProcAssignServerGroup());
