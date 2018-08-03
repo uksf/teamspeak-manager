@@ -218,6 +218,7 @@ void Engine::deleteUIDMapValue(MAP_UID_KEY key) {
         this->m_UIDMap.erase(iterator);
     }
     UNLOCK(this);
+    this->sendClientsUpdate();
 }
 
 MAP_DBID_VALUE Engine::getDBIDMapValue(MAP_DBID_KEY key) {
@@ -244,7 +245,6 @@ void Engine::updateOrSetDBIDMapValue(MAP_DBID_KEY key, std::string newClientUID)
         this->m_DBIDMap.emplace(key, newClientUID);
     }
     UNLOCK(this);
-    this->sendClientsUpdate();
 }
 
 void Engine::deleteDBIDMapValue(MAP_DBID_KEY key) {
@@ -280,7 +280,6 @@ void Engine::updateOrSetIDMapValue(MAP_ID_KEY key, std::string newClientUID) {
         this->m_IDMap.emplace(key, newClientUID);
     }
     UNLOCK(this);
-    this->sendClientsUpdate();
 }
 
 void Engine::deleteIDMapValue(MAP_ID_KEY key) {
