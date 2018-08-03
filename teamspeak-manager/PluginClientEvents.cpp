@@ -36,7 +36,6 @@ void ts3plugin_onClientKickFromServerEvent(uint64 serverConnectionHandlerID, any
     if (clientUID.empty()) return;
     Engine::getInstance()->updateOrSetUIDMapValue(clientUID, NULL_UINT, UNSET_ANYID, "", NULL_UINT, "");
     Engine::getInstance()->deleteIDMapValue(clientID);
-    Engine::getInstance()->sendClientsUpdate();
 }
 
 void ts3plugin_onClientBanFromServerEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, anyID kickerID,
@@ -51,7 +50,6 @@ void ts3plugin_onClientBanFromServerEvent(uint64 serverConnectionHandlerID, anyI
     }
     Engine::getInstance()->deleteUIDMapValue(clientUID);
     Engine::getInstance()->deleteIDMapValue(clientID);
-    Engine::getInstance()->sendClientsUpdate();
 }
 
 void ts3plugin_onClientDisplayNameChanged(uint64 serverConnectionHandlerID, anyID clientID, const char* displayName, const char* uniqueClientIdentifier) {
@@ -65,5 +63,4 @@ void ts3plugin_onClientDisplayNameChanged(uint64 serverConnectionHandlerID, anyI
         return;
     }
     Engine::getInstance()->updateOrSetUIDMapValue(clientUID, NULL_UINT, NULL_ANYID, clientName, NULL_UINT, "");
-    Engine::getInstance()->sendClientsUpdate();
 }

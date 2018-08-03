@@ -55,6 +55,9 @@ void Engine::stop() {
 }
 
 void Engine::initaliseClientMaps() {
+    this->m_UIDMap.clear();
+    this->m_DBIDMap.clear();
+    this->m_IDMap.clear();
     logTSMessage("Initialising client list");
     anyID* clients;
     if (ts3Functions.getClientList(ts3Functions.getCurrentServerConnectionHandlerID(), &clients) != ERROR_ok) {
@@ -95,7 +98,6 @@ void Engine::updateClientChannel(uint64 serverConnectionHandlerID, std::string c
         return;
     }
     this->updateOrSetUIDMapValue(clientUID, NULL_UINT, NULL_ANYID, "", newChannelID, channelName);
-    this->sendClientsUpdate();
 }
 
 void Engine::handleClient(uint64 serverConnectionHandlerID, anyID clientID, uint64 newChannelID, int visibility) {
@@ -155,8 +157,6 @@ void Engine::handleClient(uint64 serverConnectionHandlerID, anyID clientID, uint
     default:
         logTSMessage("Visibility error", clientID);
     }
-
-    this->sendClientsUpdate();
 }
 
 MAP_UID_VALUE Engine::getUIDMapValue(MAP_UID_KEY key) {
@@ -195,6 +195,7 @@ void Engine::updateOrSetUIDMapValue(MAP_UID_KEY key, uint64 newDBID, anyID newCl
         this->m_UIDMap.emplace(key, MAP_UID_VALUE{MAP_UID_VALUE(newDBID, newClientID, newClientName, newChannelID, newChannelName)});
     }
     UNLOCK(this);
+    this->sendClientsUpdate();
 }
 
 void Engine::updateUIDMapChannelName(uint64 channelID, std::string newChannelName) {
@@ -206,8 +207,8 @@ void Engine::updateUIDMapChannelName(uint64 channelID, std::string newChannelNam
             value.channelName = newChannelName;
         }
     }
-    this->sendClientsUpdate();
     UNLOCK(this);
+    this->sendClientsUpdate();
 }
 
 void Engine::deleteUIDMapValue(MAP_UID_KEY key) {
@@ -243,6 +244,7 @@ void Engine::updateOrSetDBIDMapValue(MAP_DBID_KEY key, std::string newClientUID)
         this->m_DBIDMap.emplace(key, newClientUID);
     }
     UNLOCK(this);
+    this->sendClientsUpdate();
 }
 
 void Engine::deleteDBIDMapValue(MAP_DBID_KEY key) {
@@ -278,6 +280,7 @@ void Engine::updateOrSetIDMapValue(MAP_ID_KEY key, std::string newClientUID) {
         this->m_IDMap.emplace(key, newClientUID);
     }
     UNLOCK(this);
+    this->sendClientsUpdate();
 }
 
 void Engine::deleteIDMapValue(MAP_ID_KEY key) {

@@ -226,6 +226,8 @@ void PipeManager::readLoop() {
                 break;
             }
 
+            Engine::getInstance()->initaliseClientMaps();
+
             BOOL ret;
             do {
                 ret = ReadFile(this->m_PipeHandleRead, mBuffer, BUFSIZE, &cbRead, nullptr);
