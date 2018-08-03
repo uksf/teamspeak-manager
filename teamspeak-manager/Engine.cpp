@@ -311,11 +311,11 @@ void Engine::sendClientsUpdate() {
     std::ostringstream stringStream;
     stringStream << "{\"clients\":[";
     for (auto iterator = this->m_UIDMap.begin(); iterator != this->m_UIDMap.end(); ++iterator) {
-        if (iterator != this->m_UIDMap.begin()) {
-            stringStream << ",";
-        }
         const auto value = iterator->second;
         if (value.clientID != UNSET_ANYID) {
+            if (iterator != this->m_UIDMap.begin()) {
+                stringStream << ",";
+            }
             stringStream << R"({"clientDBID":")" << value.clientDBID << R"(","clientName":")" << value.clientName << R"(","channelID":")" << value.channelID <<
                 R"(","channelName":")" << value.channelName << "\"}";
         }
