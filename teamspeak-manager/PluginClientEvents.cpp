@@ -52,6 +52,15 @@ void ts3plugin_onClientBanFromServerEvent(uint64 serverConnectionHandlerID, anyI
     Engine::getInstance()->deleteIDMapValue(clientID);
 }
 
+void ts3plugin_onClientMoveTimeoutEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, const char* timeoutMessage) {
+    // unset clientID and channelID, delete from ID map
+    logTSMessage("Client timed out: %d", clientID);
+    std::string clientUID = Engine::getInstance()->getClientUID(serverConnectionHandlerID, clientID);
+    if (clientUID.empty()) return;
+    Engine::getInstance()->updateOrSetUIDMapValue(clientUID, NULL_UINT, UNSET_ANYID, "", NULL_UINT, "");
+    Engine::getInstance()->deleteIDMapValue(clientID);
+}
+
 void ts3plugin_onClientDisplayNameChanged(uint64 serverConnectionHandlerID, anyID clientID, const char* displayName, const char* uniqueClientIdentifier) {
     // update clientName
     logTSMessage("Client name changed: %d", clientID);
