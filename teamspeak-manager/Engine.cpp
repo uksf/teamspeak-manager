@@ -26,6 +26,7 @@ void Engine::initialize(IClient* client) {
 
 void Engine::start() {
     logTSMessage("Engine starting up");
+    LOCK(this);
     this->m_UIDMap.clear();
     this->m_DBIDMap.clear();
     this->m_IDMap.clear();
@@ -33,11 +34,13 @@ void Engine::start() {
         this->getPipeManager()->initialize();
     }
     this->setState(STATE_RUNNING);
+    UNLOCK(this);
     logTSMessage("Engine startup complete");
 }
 
 void Engine::stop() {
     logTSMessage("Engine shutting down");
+    LOCK(this);
     this->setState(STATE_STOPPING);
     if (this->getProcedureEngine()) {
         this->getProcedureEngine()->stopWorker();
@@ -49,10 +52,12 @@ void Engine::stop() {
     this->m_DBIDMap.clear();
     this->m_IDMap.clear();
     this->setState(STATE_STOPPED);
+    UNLOCK(this);
     logTSMessage("Engine shutdown complete");
 }
 
 void Engine::initaliseClientMaps() {
+    LOCK(this);
     this->m_UIDMap.clear();
     this->m_DBIDMap.clear();
     this->m_IDMap.clear();
@@ -69,6 +74,7 @@ void Engine::initaliseClientMaps() {
         ts3Functions.getChannelOfClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, &channelID);
         this->handleClient(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, channelID, ENTER_VISIBILITY);
     }
+    UNLOCK(this);
 }
 
 std::string Engine::getClientUID(uint64 serverConnectionHandlerID, anyID clientID) {
