@@ -22,7 +22,7 @@ void TSClient::stop() {
 
 int TSClient::checkIfBlacklisted(char* name) {
     if (strncmp(name, "serveradmin", 40) == 0) return 1;
-    if (strncmp(name, "b2o0zBVHLeHG5gjULDfxxyHD8C0=", 40) == 0) return 1;
+    if (strncmp(name, "wukoIwZ1SPRWqrVlxyxmZypjpME=", 40) == 0) return 1;
     return 0;
 }
 
