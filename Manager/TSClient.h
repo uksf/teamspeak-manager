@@ -9,10 +9,10 @@ public:
 
     int checkIfBlacklisted(char* name) override;
 
-    void procUpdateServerGroups(std::vector<std::string>) override;
-    void procAssignServerGroup(std::vector<std::string>) override;
-    void procUnassignServerGroup(std::vector<std::string>) override;
-    void procSendMessageToClient(std::vector<std::string>) override;
+    void procUpdateServerGroups(uint64 clientDBID) override;
+    void procAssignServerGroup(uint64 clientDBID, uint64 serverGroupID) override;
+    void procUnassignServerGroup(uint64 clientDBID, uint64 serverGroupID) override;
+    void procSendMessageToClient(uint64 clientDBID, std::string message) override;
 
     DECLARE_MEMBER(STATE, State)
 };

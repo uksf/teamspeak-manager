@@ -1,77 +1,67 @@
 #include "SignalrCommon.h"
 #include "ProcedureEngine.h"
 #include "IProcedureFunction.h"
-#include "../Common/IMessage.h"
+#include "../Common/ClientMessage.h"
 
 ProcedureEngine::ProcedureEngine() {
-	this->startWorker();
+    this->startWorker();
 }
 
 ProcedureEngine::~ProcedureEngine() {
-	this->stopWorker();
+    this->stopWorker();
 }
 
-void ProcedureEngine::exProcessItem(PROCEDURE_DATA* data) {
-	if (data->function) {
-		data->function->call(data->message);
-	}
-	delete data->message;
-	free(data);
+void ProcedureEngine::exProcessItem(ProcedurePair procedure) {
+    if (procedure.first) {
+		procedure.first->call(procedure.second);
+    }
 }
 
 void ProcedureEngine::addProcedure(IProcedureFunction* cmd) {
-	{
-		std::lock_guard<std::mutex> lock(m_lockable_mutex);
-		this->m_FunctionList.insert(std::pair<std::string, IProcedureFunction*>(std::string(cmd->getName()), cmd));
-	}
+    {
+        std::lock_guard<std::mutex> lock(m_lockable_mutex);
+        this->m_FunctionList.insert(std::pair<CLIENT_MESSAGE_TYPE, IProcedureFunction*>(cmd->getType(), cmd));
+    }
 }
 
 void ProcedureEngine::removeProcedure(IProcedureFunction* cmd) {
-	{
-		std::lock_guard<std::mutex> lock(m_lockable_mutex);
-		this->m_FunctionList.erase(cmd->getName());
-	}
+    {
+        std::lock_guard<std::mutex> lock(m_lockable_mutex);
+        this->m_FunctionList.erase(cmd->getType());
+    }
 }
 
-void ProcedureEngine::removeProcedure(char* cmd) {
-	{
-		std::lock_guard<std::mutex> lock(m_lockable_mutex);
-		this->m_FunctionList.erase(cmd);
-	}
+void ProcedureEngine::removeProcedure(CLIENT_MESSAGE_TYPE cmd) {
+    {
+        std::lock_guard<std::mutex> lock(m_lockable_mutex);
+        this->m_FunctionList.erase(cmd);
+    }
 }
 
-IProcedureFunction* ProcedureEngine::findProcedure(char* cmd) {
-	if (this->getShuttingDown()) {
-		return nullptr;
-	}
-	const auto it = this->m_FunctionList.find(std::string(static_cast<char*>(cmd)));
-	if (it != this->m_FunctionList.end()) {
-		return static_cast<IProcedureFunction*>(it->second);
-	}
-	return nullptr;
+IProcedureFunction* ProcedureEngine::findProcedure(CLIENT_MESSAGE_TYPE cmd) {
+    if (this->getShuttingDown()) {
+        return nullptr;
+    }
+    const auto it = this->m_FunctionList.find(cmd);
+    if (it != this->m_FunctionList.end()) {
+        return static_cast<IProcedureFunction*>(it->second);
+    }
+    return nullptr;
 }
 
-void ProcedureEngine::runProcedure(IMessage* msg) {
-	if (msg) {
-		if (!msg->getProcedureName()) {
-			delete msg;
-			return;
-		}
+void ProcedureEngine::runProcedure(ClientMessage message) {
+    if (message.getType() == CLIENT_MESSAGE_TYPE::EMPTY_PROCEDURE) {
+        return;
+    }
 
-		IProcedureFunction* ptr = this->findProcedure(msg->getProcedureName());
-		if (ptr) {
-			if (!this->getRunning()) {
-				this->startWorker();
-			}
-			auto* data = static_cast<PROCEDURE_DATA*>(malloc(sizeof(PROCEDURE_DATA)));
-			data->function = ptr;
-			data->message = msg;
-			{
-				std::lock_guard<std::mutex> lock(m_lockable_mutex);
-				this->m_processQueue.push(data);
-			}
-		} else {
-			delete msg;
-		}
-	}
+    IProcedureFunction* function = this->findProcedure(message.getType());
+    if (function) {
+        if (!this->getRunning()) {
+            this->startWorker();
+        }
+        {
+            std::lock_guard<std::mutex> lock(m_lockable_mutex);
+            this->m_processQueue.push(ProcedurePair(function, message));
+        }
+    }
 }

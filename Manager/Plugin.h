@@ -3,6 +3,8 @@
  *
  * Copyright (c) TeamSpeak Systems GmbH
  */
+#pragma once
+#include <teamspeak/public_definitions.h>
 
 #ifndef PLUGIN_H
 #define PLUGIN_H

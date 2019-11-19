@@ -3,19 +3,20 @@
 #include "SignalrCommon.h"
 #include "../Common/Worker.h"
 #include <map>
-#include <string>
 
-class ProcedureEngine final : public Worker<PROCEDURE_DATA*> {
+class ClientMessage;
+
+class ProcedureEngine final : public Worker<ProcedurePair> {
 public:
 	ProcedureEngine();
 	~ProcedureEngine();
 
 	void addProcedure(IProcedureFunction* cmd);
 	void removeProcedure(IProcedureFunction* cmd);
-	void removeProcedure(char* cmd);
-	IProcedureFunction* findProcedure(char* cmd);
-	void runProcedure(IMessage* msg);
-	void exProcessItem(PROCEDURE_DATA* data) override;
+	void removeProcedure(CLIENT_MESSAGE_TYPE cmd);
+	IProcedureFunction* findProcedure(CLIENT_MESSAGE_TYPE cmd);
+	void runProcedure(ClientMessage message);
+	void exProcessItem(ProcedurePair procedure) override;
 private:
-	std::map<std::string, IProcedureFunction*> m_FunctionList;
+	std::map<CLIENT_MESSAGE_TYPE, IProcedureFunction*> m_FunctionList;
 };

@@ -21,14 +21,15 @@
   <ItemGroup>
     <ClInclude Include="Lockable.h" />
     <ClInclude Include="Macros.h" />
+    <ClInclude Include="ServerMessage.h" />
     <ClInclude Include="Singleton.h" />
     <ClInclude Include="Worker.h" />
     <ClInclude Include="Common.h" />
-    <ClInclude Include="IMessage.h" />
-    <ClInclude Include="Message.h" />
+    <ClInclude Include="ClientMessage.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Message.cpp" />
+    <ClCompile Include="ClientMessage.cpp" />
+    <ClCompile Include="ServerMessage.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -138,7 +139,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
@@ -161,7 +162,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>

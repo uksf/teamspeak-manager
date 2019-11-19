@@ -1,51 +1,43 @@
 #include "TSClient.h"
 #include "Engine.h"
 
+extern TS3Functions ts3Functions;
+
 int TSClient::checkIfBlacklisted(char* name) {
     if (strncmp(name, "serveradmin", 40) == 0) return 1;
     if (strncmp(name, "wukoIwZ1SPRWqrVlxyxmZypjpME=", 40) == 0) return 1;
     return 0;
 }
 
-void TSClient::procUpdateServerGroups(std::vector<std::string> args) {
-    const uint64 clientDBID = std::stoul(args.at(0));
-
+void TSClient::procUpdateServerGroups(const uint64 clientDBID) {
     logTSMessage("Request server groups for %llu", clientDBID);
-    if (ts3Functions.requestServerGroupsByClientID(ServerConnectionHandlerID, clientDBID, nullptr) != ERROR_ok) {
+    if (ts3Functions.requestServerGroupsByClientID(ts3Functions.getCurrentServerConnectionHandlerID(), clientDBID, nullptr) != ERROR_ok) {
         logTSMessage("Failed to request server groups for %llu", clientDBID);
     }
 }
 
-void TSClient::procAssignServerGroup(std::vector<std::string> args) {
-    const uint64 clientDBID = std::stoul(args.at(0));
-    const uint64 serverGroupID = std::stoul(args.at(1));
-
+void TSClient::procAssignServerGroup(const uint64 clientDBID, const uint64 serverGroupID) {
     logTSMessage("Assign server group %llu for %llu", serverGroupID, clientDBID);
-    if (ts3Functions.requestServerGroupAddClient(ServerConnectionHandlerID, serverGroupID, clientDBID, nullptr) != ERROR_ok) {
+    if (ts3Functions.requestServerGroupAddClient(ts3Functions.getCurrentServerConnectionHandlerID(), serverGroupID, clientDBID, nullptr) != ERROR_ok) {
         logTSMessage("Failed to assign server group %llu for %llu", serverGroupID, clientDBID);
     }
 }
 
-void TSClient::procUnassignServerGroup(std::vector<std::string> args) {
-    const uint64 clientDBID = std::stoul(args.at(0));
-    const uint64 serverGroupID = std::stoul(args.at(1));
-
+void TSClient::procUnassignServerGroup(const uint64 clientDBID, const uint64 serverGroupID) {
     logTSMessage("Unassign server group %llu for %llu", serverGroupID, clientDBID);
-    if (ts3Functions.requestServerGroupDelClient(ServerConnectionHandlerID, serverGroupID, clientDBID, nullptr) != ERROR_ok) {
+    if (ts3Functions.requestServerGroupDelClient(ts3Functions.getCurrentServerConnectionHandlerID(), serverGroupID, clientDBID, nullptr) != ERROR_ok) {
         logTSMessage("Failed to unassign server group %llu for %llu", serverGroupID, clientDBID);
     }
 }
 
-void TSClient::procSendMessageToClient(std::vector<std::string> args) {
-    const uint64 clientDBID = std::stoull(args.at(0));
-    const std::string message = args.at(1);
+void TSClient::procSendMessageToClient(const uint64 clientDBID, const std::string message) {
     logTSMessage("Send message to %llu: '%s'", clientDBID, message.c_str());
 
-    MAP_DBID_VALUE clientUID = Engine::getInstance()->getDBIDMapValue(clientDBID);
+    const MAP_DBID_VALUE clientUID = Engine::getInstance()->getDBIDMapValue(clientDBID);
     if (!clientUID.empty()) {
         const auto mapUIDValue = Engine::getInstance()->getUIDMapValue(clientUID);
         if (!mapUIDValue.invalid) {
-            ts3Functions.requestSendPrivateTextMsg(ServerConnectionHandlerID, message.c_str(), mapUIDValue.clientID, nullptr);
+            ts3Functions.requestSendPrivateTextMsg(ts3Functions.getCurrentServerConnectionHandlerID(), message.c_str(), mapUIDValue.clientID, nullptr);
         } else {
             logTSMessage("Failed to get ID from UID %s", clientUID.c_str());
         }

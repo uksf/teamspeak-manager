@@ -1,21 +1,10 @@
+#include "Plugin.h"
 #include "ManagerCommon.h"
 #include "Engine.h"
 
-#ifdef _WIN32
-#define STRCPY(dest, destSize, src) strcpy_s(dest, destSize, src)
-#define SNPRINTF sprintf_s
-#else
-#define _strcpy(dest, destSize, src) { strncpy(dest, src, destSize-1); (dest)[destSize-1] = '\0'; }
-#endif
+constexpr auto PLUGIN_API_VERSION = 23;
 
-#define PLUGIN_API_VERSION 23
-
-#define PATH_BUFSIZE 512
-#define COMMAND_BUFSIZE 128
-#define INFODATA_BUFSIZE 128
-#define SERVERINFO_BUFSIZE 256
-#define CHANNELINFO_BUFSIZE 512
-#define RETURNCODE_BUFSIZE 128
+TS3Functions ts3Functions;
 
 const char* ts3plugin_name() {
 	return "Teamspeak Manager";
@@ -37,6 +26,10 @@ const char* ts3plugin_description() {
     return "Manages interactions with UKSF API";
 }
 
+int ts3plugin_requestAutoload() {
+	return 1;
+}
+
 void ts3plugin_setFunctionPointers(const struct TS3Functions funcs) {
 	ts3Functions = funcs;
 }
@@ -53,36 +46,25 @@ int ts3plugin_init() {
 
 void ts3plugin_onConnectStatusChangeEvent(uint64 serverConnectionHandlerID, int status, unsigned int err) {
     if (status == STATUS_CONNECTION_ESTABLISHED) {
-		ServerConnectionHandlerID = serverConnectionHandlerID;
         ts3Functions.requestChannelSubscribeAll(serverConnectionHandlerID, nullptr);
-        if (Engine::getInstance()->getState() != STATE_RUNNING) {
-			anyID* clients;
-			const auto id = ServerConnectionHandlerID;
-			if (ts3Functions.getClientList(id, &clients) != ERROR_ok) {
-				logTSMessage("Failed getting client list");
-				return;
-			}
-			while (*clients) {
-				const anyID clientID = *clients;
-				clients++;
-				uint64 channelID;
-				ts3Functions.getChannelOfClient(ServerConnectionHandlerID, clientID, &channelID);
-				logTSMessage("Client %llu, %llu", clientID, channelID);
-			}
-            Engine::getInstance()->start();
+        if (Engine::getInstance()->getState() != STATE::RUNNING) {
+            Engine::getInstance()->start(); // possibly not got all clients yet, only on first launch
         }
     } else if (status == STATUS_DISCONNECTED) {
-		ServerConnectionHandlerID = 0;
-        if (Engine::getInstance()->getState() != STATE_STOPPED && Engine::getInstance()->getState() != STATE_STOPPING) {
+        if (Engine::getInstance()->getState() != STATE::STOPPED && Engine::getInstance()->getState() != STATE::STOPPING) {
             Engine::getInstance()->stop();
         }
     }
 }
 
 void ts3plugin_shutdown() {
-    if (Engine::getInstance()->getState() != STATE_STOPPED && Engine::getInstance()->getState() != STATE_STOPPING) {
+    if (Engine::getInstance()->getState() != STATE::STOPPED && Engine::getInstance()->getState() != STATE::STOPPING) {
         Engine::getInstance()->stop();
     }
+}
+
+void ts3plugin_onChannelSubscribeFinishedEvent(uint64 serverConnectionHandlerID) {
+	Engine::getInstance()->initaliseClientMaps();
 }
 
 void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, const char* uniqueClientIdentifier, uint64 clientDatabaseID) {
@@ -95,13 +77,13 @@ void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, const 
 
     // pop queue and handle
     const DBID_QUEUE_MODE callback = Engine::getInstance()->getFromCallbackQueue(clientUID);
-    if (callback == DBID_QUEUE_MODE_UNSET) {
+    if (callback == DBID_QUEUE_MODE::UNSET) {
         return;
     }
 	logTSMessage("Found callback to handle in DBID queue for UID %s", clientUID.c_str());
     const auto mapUIDValue = Engine::getInstance()->getUIDMapValue(clientUID);
     switch (callback) {
-    case DBID_QUEUE_MODE_GROUPS:
+		case DBID_QUEUE_MODE::GROUPS:
         logTSMessage("Handling Groups callback");
         ts3Functions.requestServerGroupsByClientID(serverConnectionHandlerID, mapUIDValue.clientDBID, nullptr);
         return;

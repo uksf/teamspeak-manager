@@ -30,15 +30,18 @@
     <ClInclude Include="Macros.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IMessage.h">
+    <ClInclude Include="ServerMessage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Message.h">
+    <ClInclude Include="ClientMessage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Message.cpp">
+    <ClCompile Include="ServerMessage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientMessage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,22 +1,21 @@
 #pragma once
 
-#include "../Common/Common.h"
-#include "../Common/Macros.h"
+#include "../Common/ClientMessage.h"
 
-class IMessage;
 class IProcedureFunction;
 
-typedef struct PROCEDURE_DATA {
-	IProcedureFunction* function;
-	IMessage* message;
+//typedef struct PROCEDURE_DATA {
+//	IProcedureFunction* function;
+//	ClientMessage message;
+//
+//	PROCEDURE_DATA(IProcedureFunction* func, const ClientMessage msg) {
+//		function = func;
+//		message = msg;
+//	}
+//
+//	PROCEDURE_DATA() {
+//        function = nullptr;
+//    }
+//} PROCEDURE_DATA, * PPROCEDURE_DATA;
 
-	PROCEDURE_DATA(IProcedureFunction* func, IMessage* msg) {
-		function = func;
-		message = msg;
-	}
-
-	PROCEDURE_DATA() {
-		function = nullptr;
-		message = nullptr;
-	}
-} PROCEDURE_DATA, * PPROCEDURE_DATA;
+typedef std::pair<IProcedureFunction*, ClientMessage> ProcedurePair;

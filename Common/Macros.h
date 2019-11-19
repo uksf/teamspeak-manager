@@ -1,21 +1,5 @@
 #pragma once
 
-#define PIPE_TIMEOUT 5000
-#define BUFSIZE 10240
-
-#define STATE_RUNNING 1
-#define STATE_INITIALIZING 2
-#define STATE_STOPPING 3
-#define STATE_STARTING 4
-#define STATE_READY 5
-#define STATE_STOPPED 0xFFFFFFFF
-
-#define NULL_ANYID (short)0
-#define UNSET_ANYID SHRT_MAX
-#define NULL_UINT 0llu
-
-#define STR(x) #x
-
 #define DECLARE_MEMBER_SET(type, name) \
     virtual __inline void set##name(##type value) { this->m_##name = value; }
 
@@ -44,13 +28,9 @@ public: \
     DECLARE_INTERFACE_MEMBER_SET(type, name) \
     DECLARE_INTERFACE_MEMBER_GET(type, name)
 
-#define PROCEDURE_FUNCTION(name) class name## : public IProcedureFunction { \
+#define PROCEDURE_FUNCTION(type,name) class name## : public IProcedureFunction { \
+DECLARE_MEMBER(CLIENT_MESSAGE_TYPE, Type) \
 public: \
-    name##(){ this->m_Name = STR(name); } \
+    name##(){ this->m_Type = type; } \
     ~##name(){ } \
-    void call(IMessage *vMessage)
-
-#define DBID_QUEUE_MODE_UNSET 0
-#define DBID_QUEUE_MODE_SNAPSHOT 1
-#define DBID_QUEUE_MODE_GROUPS 2
-#define DBID_QUEUE_MODE_ONLINE 3
+    void call(ClientMessage message)

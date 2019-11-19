@@ -7,4 +7,12 @@ public:
 
 		return &obj;
 	}
+
+//private:
+//	//T() {}
+//
+//public:
+//	Singleton(Singleton const&) = delete;
+//	void operator=(Singleton const&) = delete;
 };
+

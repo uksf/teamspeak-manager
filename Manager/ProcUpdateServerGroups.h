@@ -2,15 +2,10 @@
 
 #include "../SignalrClient/IProcedureFunction.h"
 #include "Engine.h"
-#include "../Common/Message.h"
 
-PROCEDURE_FUNCTION(ProcUpdateServerGroups) {
-    const std::vector<std::string> details = {
-        vMessage->getParameter(0),
-    };
+PROCEDURE_FUNCTION(CLIENT_MESSAGE_TYPE::GROUPS, ProcUpdateServerGroups) {
+        const uint64 clientDBID = std::stoul(std::to_string(message.getParameter("clientDbId").as_double()));
 
-    Engine::getInstance()->getClient()->procUpdateServerGroups(details);
-}
-
-DECLARE_MEMBER(char *, Name)
+        Engine::getInstance()->getClient()->procUpdateServerGroups(clientDBID);
+    }
 };

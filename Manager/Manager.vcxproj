@@ -99,7 +99,8 @@
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention />
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>$(SolutionDir)signalrclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)lib\Debug\signalrclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <UACUIAccess>true</UACUIAccess>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)x32\Debug\Manager_win32.dll" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I
@@ -123,7 +124,8 @@
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <AdditionalDependencies>$(SolutionDir)signalrclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)lib\Debug\signalrclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <UACUIAccess>true</UACUIAccess>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)x64\Debug\Manager_win64.dll" "C:\Users\Tim\AppData\Roaming\TS3Client\plugins" /Y /I
@@ -144,7 +146,8 @@
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention />
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>$(SolutionDir)signalrclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)lib\Release\signalrclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <UACUIAccess>true</UACUIAccess>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -162,7 +165,8 @@
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <AdditionalDependencies>$(SolutionDir)signalrclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)lib\Release\signalrclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <UACUIAccess>true</UACUIAccess>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

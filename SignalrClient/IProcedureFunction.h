@@ -6,6 +6,6 @@ class IProcedureFunction {
 public:
 	virtual ~IProcedureFunction() = default;
 
-	virtual void call(IMessage*) = 0;
-	DECLARE_INTERFACE_MEMBER(char*, Name)
+	virtual void call(ClientMessage message) = 0;
+	DECLARE_INTERFACE_MEMBER(CLIENT_MESSAGE_TYPE, Type)
 };
