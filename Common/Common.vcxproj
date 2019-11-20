@@ -23,7 +23,6 @@
     <ClInclude Include="Macros.h" />
     <ClInclude Include="ServerMessage.h" />
     <ClInclude Include="Singleton.h" />
-    <ClInclude Include="Worker.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="ClientMessage.h" />
   </ItemGroup>

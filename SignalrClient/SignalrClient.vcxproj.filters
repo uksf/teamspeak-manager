@@ -18,24 +18,12 @@
     <ClCompile Include="SignalrClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ProcedureEngine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SignalrCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ISignalrClient.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SignalrClient.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IProcedureFunction.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ProcedureEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

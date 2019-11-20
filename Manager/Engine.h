@@ -3,56 +3,34 @@
 #include "ManagerCommon.h"
 #include "../Common/Singleton.h"
 #include "../Common/Lockable.h"
-#include "../SignalrClient/ISignalrClient.h"
-#include "../SignalrClient/ProcedureEngine.h"
-#include "IClient.h"
+#include <functional>
+#include <concurrent_queue.h>
 
 class Engine final : public Singleton<Engine>, public Lockable {
 public:
-    Engine() = default;
-    ~Engine() = default;
+	Engine() = default;
+	~Engine() = default;
 
-    void initialize();
+	void initialize();
 
-    void start();
-    void stop();
+	void start();
+	void stop();
 
-	void procShutdown();
+    [[nodiscard]] STATE getState() const;
 
-	void initaliseClientMaps();
-	void handleClient(anyID clientID, uint64 newChannelID, int visibility);
-
-	std::string getClientUID(anyID clientID);
-	MAP_DBID_VALUE getDBIDMapValue(MAP_DBID_KEY key);
-	MAP_UID_VALUE getUIDMapValue(MAP_UID_KEY key);
-	DBID_QUEUE_MODE getFromCallbackQueue(MAP_UID_KEY key);
-
-	void addToCallbackQueue(MAP_UID_KEY key, DBID_QUEUE_MODE mode);
-
-	void updateClientChannel(std::string clientUID, uint64 newChannelID);
-	void updateOrSetDBIDMapValue(MAP_DBID_KEY key, std::string newClientUID);
-	void updateOrSetUIDMapValue(MAP_UID_KEY key, uint64 newDBID, anyID newClientID, std::string newClientName, uint64 newChannelID, std::string newChannelName);
-	void updateUIDMapChannelName(uint64 channelID, std::string newChannelName);
-
-	void deleteUIDMapValue(MAP_UID_KEY key);
-	void deleteDBIDMapValue(MAP_DBID_KEY key);
-	void deleteIDMapValue(MAP_ID_KEY key);
-
-    DECLARE_MEMBER(ISignalrClient*, SignalrClient)
-    DECLARE_MEMBER(ProcedureEngine*, ProcedureEngine)
-    DECLARE_MEMBER(IClient*, Client)
-    DECLARE_MEMBER(STATE, State)
-
-    DECLARE_MEMBER_PRIVATE(MAP_UID, UIDMap)
-    DECLARE_MEMBER_PRIVATE(MAP_DBID, DBIDMap)
-    DECLARE_MEMBER_PRIVATE(MAP_ID, IDMap)
+	void addToFunctionQueue(std::function<void()> function);
+	void addToSendQueue(SERVER_MESSAGE_TYPE type, signalr::value value);
+	void addToReceiveQueue(ClientMessage message);
 
 private:
-	void sendClientsUpdate();
+	STATE m_state = STATE::STOPPED;
+	std::thread m_workerThread;
+	Concurrency::concurrent_queue<std::function<void()>> m_functionQueue{};
+	Concurrency::concurrent_queue<std::pair<SERVER_MESSAGE_TYPE, signalr::value>> m_sendQueue{};
+	Concurrency::concurrent_queue<ClientMessage> m_receiveQueue{};
 
-	MAP_ID_VALUE getIDMapValue(MAP_ID_KEY key);
 
-	void updateOrSetIDMapValue(MAP_ID_KEY key, std::string newClientUID);
-
-	DBID_QUEUE m_DBIDCallbackQueue;
+	void setNewState(STATE state);
+	void clearQueues();
+	void doWork();
 };

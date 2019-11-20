@@ -1,177 +1,128 @@
 #include "SignalrClient.h"
 #include "../Common/ClientMessage.h"
 #include <future>
+#include "../Manager/Engine.h"
+#include "../Manager/Data.h"
 
-SignalrClient::~SignalrClient() {
-    this->SignalrClient::shutdown();
+void SignalrClient::initialize() {
+	logTSMessage("Signalr: Initialising");
+	this->setNewState(CONNECTION_STATE::DISCONNECTED);
+	this->m_disconnectRequested = false;
+
+	this->m_connection = std::make_shared<signalr::hub_connection>("http://localhost:5000/hub/teamspeak", signalr::trace_level::errors, std::make_shared<logger>());
+
+	this->m_connection->on("Receive", [](const signalr::value& value) {
+		logTSMessage("Signalr: received message tid: %u", std::this_thread::get_id());
+		const auto procedure = static_cast<CLIENT_MESSAGE_TYPE>(static_cast<int>(value.as_array()[0].as_double()));
+		const std::map<std::string, signalr::value> args = value.as_array()[1].as_map();
+		Engine::getInstance()->addToReceiveQueue(ClientMessage(procedure, args));
+	});
+
+	logTSMessage("Signalr: Initialization complete");
 }
 
-void SignalrClient::initialize(const std::function<void()> connectedCallback, const std::function<void(ClientMessage)> procedureCallback) {
-    {
-        std::lock_guard<std::mutex> lock(m_lockable_mutex);
-        this->SignalrClient::setClientConnecting(false);
-        this->SignalrClient::setClientConnected(false);
-        this->SignalrClient::setShuttingDown(false);
-        this->m_connectedCallback = connectedCallback;
-        this->m_procedureCallback = procedureCallback;
-        this->m_workerThread = std::thread(&SignalrClient::workerLoop, this);
-    }
+void SignalrClient::requestDisconnect() {
+	logTSMessage("Signalr: Disconnect requested");
+	this->m_disconnectRequested = true;
 }
 
 void SignalrClient::connect() {
-    {
-        std::lock_guard<std::mutex> lock(m_lockable_mutex);
-        this->m_connection = nullptr;
-        this->setClientConnected(false);
+	if (this->getState() == CONNECTION_STATE::DISCONNECTING) return;
+	logTSMessage("Signalr: Connecting");
+	this->setNewState(CONNECTION_STATE::CONNECTING);
 
-        this->m_connection = std::make_shared<signalr::hub_connection>("http://localhost:5000/hub/teamspeak", signalr::trace_level::errors, std::make_shared<logger>());
+	if (this->m_connection == nullptr) {
+		logTSMessage("Signalr: Trying to connect but connection object is null");
+	}
 
-        this->m_connection->on("Receive", [this](const signalr::value& value) {
-            const auto procedure = static_cast<CLIENT_MESSAGE_TYPE>(static_cast<int>(value.as_array()[0].as_double()));
-            const std::map<std::string, signalr::value> args = value.as_array()[1].as_map();
-            this->m_procedureCallback(ClientMessage(procedure, args));
-        });
+	this->m_connection->start([this](const std::exception_ptr exception) {
+		if (exception) {
+			try {
+				std::rethrow_exception(exception);
+			} catch (const std::exception & ex) {
+				logTSMessage("Signalr: Failed to connect: %s", ex.what());
+				this->setNewState(CONNECTION_STATE::DISCONNECTED);
+			}
+		} else {
+			logTSMessage("Signalr: Connected");
+			this->setNewState(CONNECTION_STATE::CONNECTED);
+			Engine::getInstance()->addToFunctionQueue([]() {
+				Data::getInstance()->populateClientMaps();
+			});
+		}
+	});
+}
 
-        this->setClientConnecting(true);
-        this->m_connection->start([this](const std::exception_ptr exception) {
-            if (exception) {
-                try {
-                    std::rethrow_exception(exception);
-                } catch (const std::exception& ex) {
-                    logTSMessage("Exception when starting connection: %s", ex.what());
-                    this->setClientConnected(false);
-                    this->setClientConnecting(false);
-                }
-            } else {
-                logTSMessage("Connected");
-                this->setClientConnected(true);
-                this->setClientConnecting(false);
-                this->m_connectedCallback();
-            }
-        });
+void SignalrClient::updateConnectionState() {
+	if (this->m_connection == nullptr) return;
+    if (this->m_connection->get_connection_state() == signalr::connection_state::disconnected) {
+		this->setNewState(CONNECTION_STATE::DISCONNECTED);
     }
 }
 
-void SignalrClient::shutdown() {
-    if (this->getShuttingDown()) return;
-    {
-        std::lock_guard<std::mutex> lock(m_lockable_mutex);
-        this->setShuttingDown(true);
-        if (this->m_workerThread.joinable()) {
-            this->m_workerThread.join();
-        }
-        this->m_sendQueue.clear();
+void SignalrClient::disconnect() {
+	if (this->getState() == CONNECTION_STATE::DISCONNECTED || this->getState() == CONNECTION_STATE::DISCONNECTING) return;
+	logTSMessage("Signalr: Disconnecting");
+	this->setNewState(CONNECTION_STATE::DISCONNECTING);
 
-        std::promise<void> task;
-        if (this->m_connection && this->m_connection->get_connection_state() != signalr::connection_state::disconnected) {
-            this->m_connection->stop([this, &task](const std::exception_ptr exception) {
-                try {
-                    if (exception) {
-                        std::rethrow_exception(exception);
-                    }
+	std::promise<void> task;
+	if (this->m_connection && this->m_connection->get_connection_state() != signalr::connection_state::disconnected) {
+		this->m_connection->stop([this, &task](const std::exception_ptr exception) {
+			try {
+				if (exception) {
+					std::rethrow_exception(exception);
+				}
 
-                    logTSMessage("Connection stopped successfully");
-                } catch (const std::exception& e) {
-                    logTSMessage("Exception when stopping connection: %s", e.what());
-                }
-                this->m_connection = nullptr;
-                task.set_value();
-            });
-        } else {
-            task.set_value();
-        }
-        task.get_future().get();
-        this->setClientConnecting(false);
-        this->setClientConnected(false);
-        this->setShuttingDown(false);
-    }
+				logTSMessage("Signalr: Disconnected");
+			} catch (const std::exception & e) {
+				logTSMessage("Signalr: Failed to disconnect: %s", e.what());
+			}
+			this->m_connection = nullptr;
+			task.set_value();
+		});
+	} else {
+		logTSMessage("Signalr: Already disconnected");
+		this->m_connection = nullptr;
+		task.set_value();
+	}
+	task.get_future().get();
+	this->setNewState(CONNECTION_STATE::DISCONNECTED);
 }
 
-
-void SignalrClient::workerLoop() {
-    while (!this->getShuttingDown()) {
-        if (this->m_connection) {
-            if (this->getClientConnecting()) {
-                logTSMessage("Waiting for connection...");
-                wait(10000, [this]() {
-                    return !this->getClientConnecting();
-                });
-            } else {
-                if (this->getClientConnected()) {
-                    auto id = this->m_connection->get_connection_id();
-                    switch (this->m_connection->get_connection_state()) {
-                    case signalr::connection_state::connected: {
-                        std::lock_guard<std::mutex> lock(m_lockable_mutex);
-                        std::pair<SERVER_MESSAGE_TYPE, signalr::value> message;
-                        if (this->m_sendQueue.try_pop(message)) {
-                            if (message.first != SERVER_MESSAGE_TYPE::EMPTY_EVENT) {
-                                this->sendMessageToClient(message);
-                            }
-                        }
-                    }
-						this->wait(5);
-                        break;
-                    case signalr::connection_state::connecting:
-                        logTSMessage("Attempting to connect to server");
-						this->wait(500);
-                        break;
-                    case signalr::connection_state::disconnecting:
-                        logTSMessage("Attempting to disconnect from server");
-						this->wait(500);
-                        break;
-                    case signalr::connection_state::disconnected:
-                        logTSMessage("Disconnected from server, trying to reconnect...");
-                        this->connect();
-                        this->wait(500);
-                        break;
-                    default: break;
-                    }
-                } else {
-                    logTSMessage("Not connected, connecting...");
-                    this->connect();
-                }
-            }
-        } else {
-            logTSMessage("Not connected, connecting...");
-            this->connect();
-        }
-    }
+CONNECTION_STATE SignalrClient::getState() const {
+	return this->m_state;
 }
 
-void SignalrClient::wait(int duration, const std::function<bool()> predicate) {
-    while (duration != 0) {
-		if (this->getShuttingDown() || predicate()) break;
-        Sleep(1);
-        duration--;
-    }
+bool SignalrClient::isDisconnectRequested() const {
+	return this->m_disconnectRequested;
 }
 
-
-void SignalrClient::sendMessageToClient(const std::pair<SERVER_MESSAGE_TYPE, signalr::value> message) const {
-    const std::vector<signalr::value> arr{static_cast<double>(message.first), message.second};
-    const signalr::value args(arr);
-
-    if (this->m_connection) {
-        this->m_connection->invoke("Invoke", args, [](const signalr::value& value, std::exception_ptr exception) {
-            try {
-                if (exception) {
-                    std::rethrow_exception(exception);
-                }
-
-                if (value.is_string()) {
-                    logTSMessage("Invoke returned: %s", value.as_string().c_str());
-                }
-            } catch (const std::exception& e) {
-                logTSMessage("Error while sending data: %s", e.what());
-            }
-        });
-    }
+void SignalrClient::setNewState(const CONNECTION_STATE state) {
+	{
+		std::lock_guard<std::mutex> lock(m_lockable_mutex);
+		this->m_state = state;
+	}
 }
 
-void SignalrClient::sendMessage(SERVER_MESSAGE_TYPE procedure, signalr::value value) {
-    if (procedure == SERVER_MESSAGE_TYPE::EMPTY_EVENT) return;
-    {
-        std::lock_guard<std::mutex> lock(m_lockable_mutex);
-        this->m_sendQueue.push(std::pair<SERVER_MESSAGE_TYPE, signalr::value>(procedure, value));
-    }
+void SignalrClient::sendMessage(std::pair<SERVER_MESSAGE_TYPE, signalr::value> message) const {
+	if (message.first == SERVER_MESSAGE_TYPE::EMPTY_EVENT) return;
+	logTSMessage("Signalr: Send message tid: %u", std::this_thread::get_id());
+	const std::vector<signalr::value> arr{ static_cast<double>(message.first), message.second };
+	const signalr::value args(arr);
+
+	if (this->m_connection) {
+		this->m_connection->invoke("Invoke", args, [](const signalr::value& value, std::exception_ptr exception) {
+			try {
+				if (exception) {
+					std::rethrow_exception(exception);
+				}
+
+				if (value.is_string()) {
+					logTSMessage("Signalr: Invoke returned: %s", value.as_string().c_str());
+				}
+			} catch (const std::exception & e) {
+				logTSMessage("Signalr: Error while sending data: %s", e.what());
+			}
+		});
+	}
 }

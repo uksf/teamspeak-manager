@@ -13,15 +13,22 @@
 #include <map>
 #include <optional>
 
+constexpr auto NULL_ANYID = short(0);
+constexpr auto UNSET_ANYID = MAXSHORT;
+constexpr auto NULL_UINT = 0llu;
+
 enum class STATE {
 	STOPPED,
 	RUNNING,
 	STOPPING
 };
 
-constexpr auto NULL_ANYID = short(0);
-constexpr auto UNSET_ANYID = MAXSHORT;
-constexpr auto NULL_UINT = 0llu;
+enum class CONNECTION_STATE {
+	DISCONNECTED,
+    DISCONNECTING,
+	CONNECTING,
+	CONNECTED
+};
 
 enum class DBID_QUEUE_MODE {
 	UNSET,
@@ -33,7 +40,7 @@ enum class DBID_QUEUE_MODE {
 enum class SERVER_MESSAGE_TYPE {
 	EMPTY_EVENT,
 	CLIENTS,
-	CLIENT_SERVER_GROUPS	
+	CLIENT_SERVER_GROUPS
 };
 
 enum class CLIENT_MESSAGE_TYPE {
@@ -42,7 +49,9 @@ enum class CLIENT_MESSAGE_TYPE {
 	UNASSIGN,
 	GROUPS,
 	MESSAGE,
-	SHUTDOWN	
+	SHUTDOWN
 };
+
+inline double processId = 0;
 
 void logTSMessage(char const* format, ...);

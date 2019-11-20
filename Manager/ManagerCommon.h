@@ -7,9 +7,10 @@
 #include <teamspeak/clientlib_publicdefinitions.h>
 #include <ts3_functions.h>
 #include "../Common/Common.h"
+#include "../Common/ClientMessage.h"
+#include "IProcedure.h"
 
 class IMessage;
-class IProcedureFunction;
 
 // UID map
 // key: UID
@@ -56,3 +57,5 @@ typedef std::map<MAP_ID_KEY, MAP_ID_VALUE> MAP_ID;
 // pair: UID, QUEUE_MODE
 typedef DBID_QUEUE_MODE DBID_QUEUE_MODE;
 typedef std::map<MAP_UID_KEY, DBID_QUEUE_MODE> DBID_QUEUE;
+
+typedef std::pair<IProcedure*, ClientMessage> ProcedurePair;

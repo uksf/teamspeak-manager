@@ -2,47 +2,37 @@
 
 #include "SignalrCommon.h"
 #include "../Common/Lockable.h"
-#include "ISignalrClient.h"
-#include <thread>
 #include <concurrent_queue.h>
 #include <signalrclient/log_writer.h>
 #include <signalrclient/hub_connection.h>
+#include "../Common/Singleton.h"
 
 class logger final : public signalr::log_writer {
-    void __cdecl write(const std::string& entry) override {
-        logTSMessage(entry.c_str());
-    }
+	void __cdecl write(const std::string& entry) override {
+		logTSMessage(entry.c_str());
+	}
 };
 
-class SignalrClient final : public ISignalrClient, public Lockable {
+class SignalrClient final : public Singleton<SignalrClient>, public Lockable {
 public:
-    SignalrClient() = default;
-    ~SignalrClient();
-    void initialize(std::function<void()> connectedCallback, std::function<void(ClientMessage)> procedureCallback) override;
-    void shutdown() override;
-    void sendMessage(SERVER_MESSAGE_TYPE procedure, signalr::value value) override;
+	SignalrClient() = default;
+	~SignalrClient() = default;
 
-DECLARE_MEMBER(bool, ClientConnecting)
-DECLARE_MEMBER(bool, ClientConnected)
-DECLARE_MEMBER(bool, ShuttingDown)
+	void initialize();
+	void disconnect();
+	void requestDisconnect();
+	void connect();
+	void updateConnectionState();
 
-    bool getConnected() override {
-        return this->getClientConnected();
-    }
+    [[nodiscard]] CONNECTION_STATE getState() const;
+    [[nodiscard]] bool isDisconnectRequested() const;
 
-    void setConnected(const bool value) override {
-        this->setClientConnected(value);
-    }
+	void sendMessage(std::pair<SERVER_MESSAGE_TYPE, signalr::value> message) const;
 
 private:
-    std::function<void()> m_connectedCallback;
-    std::function<void(ClientMessage)> m_procedureCallback;
-    std::shared_ptr<signalr::hub_connection> m_connection;
-    Concurrency::concurrent_queue<std::pair<SERVER_MESSAGE_TYPE, signalr::value>> m_sendQueue{};
-    std::thread m_workerThread;
+	std::shared_ptr<signalr::hub_connection> m_connection;
+	CONNECTION_STATE m_state = CONNECTION_STATE::DISCONNECTED;
+	bool m_disconnectRequested{};
 
-    void workerLoop();
-    void connect();
-    void sendMessageToClient(std::pair<SERVER_MESSAGE_TYPE, signalr::value> message) const;
-    void wait(int duration, std::function<bool()> predicate = []() { return false; });
+	void setNewState(CONNECTION_STATE state);
 };

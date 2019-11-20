@@ -159,13 +159,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ProcedureEngine.cpp" />
     <ClCompile Include="SignalrClient.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="IProcedureFunction.h" />
-    <ClInclude Include="ISignalrClient.h" />
-    <ClInclude Include="ProcedureEngine.h" />
     <ClInclude Include="SignalrClient.h" />
     <ClInclude Include="SignalrCommon.h" />
   </ItemGroup>

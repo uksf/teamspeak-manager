@@ -28,7 +28,7 @@ public: \
     DECLARE_INTERFACE_MEMBER_SET(type, name) \
     DECLARE_INTERFACE_MEMBER_GET(type, name)
 
-#define PROCEDURE_FUNCTION(type,name) class name## : public IProcedureFunction { \
+#define PROCEDURE_FUNCTION(type,name) class name## : public IProcedure { \
 DECLARE_MEMBER(CLIENT_MESSAGE_TYPE, Type) \
 public: \
     name##(){ this->m_Type = type; } \
