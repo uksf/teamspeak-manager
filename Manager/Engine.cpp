@@ -75,7 +75,7 @@ void Engine::doWork() {
 			}
 		} else {
 			// If disconnected
-			if (signalrState == CONNECTION_STATE::DISCONNECTED) {
+			if (signalrState == CONNECTION_STATE::DISCONNECTED && signalrState != CONNECTION_STATE::CONNECTING) {
 				// Connect
 				logTSMessage("Engine: Not connected");
 				SignalrClient::getInstance()->connect();

@@ -35,13 +35,13 @@ void Data::populateClientMaps() {
 }
 
 void Data::handleClient(const anyID clientID, const uint64 newChannelID, const int visibility) {
-    logTSMessage("Data: handle client tid: %u", std::this_thread::get_id());
+    logTSMessage("Data: handle client %d tid: %u", clientID, std::this_thread::get_id());
     const std::string clientUID = this->getClientUID(clientID);
     if (clientUID.empty()) return;
 
     switch (visibility) {
     case ENTER_VISIBILITY: {
-        logTSMessage("Data: Client joined: %d", clientID);
+        logTSMessage("Data: Client joined: %d, %s", clientID, clientUID.c_str());
         char* clientName;
         if (ts3Functions.getClientVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, CLIENT_NICKNAME, &clientName) != ERROR_ok) {
             logTSMessage("Data: Failed getting client name");
@@ -54,7 +54,7 @@ void Data::handleClient(const anyID clientID, const uint64 newChannelID, const i
         break;
     }
     case RETAIN_VISIBILITY: {
-        logTSMessage("Data: Client moved: %d", clientID);
+        logTSMessage("Data: Client moved: %d, %s", clientID, clientUID.c_str());
         char* clientName;
         if (ts3Functions.getClientVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, CLIENT_NICKNAME, &clientName) != ERROR_ok) {
             logTSMessage("Failed getting client name");
@@ -103,9 +103,8 @@ void Data::checkClientServerGroups(const char* clientUniqueIdentity) {
     }
 }
 
-void Data::onClientDBIDfromUID(char* uniqueClientIdentifier, const uint64 clientDatabaseID) {
-    logTSMessage("Data: Client DBID retrieved: %llu", clientDatabaseID);
-    const std::string clientUID(uniqueClientIdentifier);
+void Data::onClientDBIDfromUID(const std::string clientUID, const uint64 clientDatabaseID) {
+    logTSMessage("Data: Client DBID %llu retrieved for %s tid %u", clientDatabaseID, clientUID.c_str(), std::this_thread::get_id());
     this->updateOrSetDBIDMapValue(clientDatabaseID, clientUID);
     this->updateOrSetUIDMapValue(clientUID, clientDatabaseID, NULL_ANYID, "", NULL_UINT, "");
 
@@ -173,14 +172,14 @@ void Data::onClientDisplayName(const anyID clientID) {
     if (clientUID.empty()) return;
     char* clientName;
     if (ts3Functions.getClientVariableAsString(ts3Functions.getCurrentServerConnectionHandlerID(), clientID, CLIENT_NICKNAME, &clientName) != ERROR_ok) {
-        logTSMessage("TS: Failed getting client name");
+        logTSMessage("Data: Failed getting client name");
         return;
     }
     this->updateOrSetUIDMapValue(clientUID, NULL_UINT, NULL_ANYID, clientName, NULL_UINT, "");
 }
 
 std::string Data::getClientUID(const anyID clientID) {
-    logTSMessage("Data: Engine Get client UID tid: %u", std::this_thread::get_id());
+    logTSMessage("Data: Get client UID from ID %d tid: %u", clientID, std::this_thread::get_id());
     char* clientUID;
     std::string clientUIDString = this->getIDMapValue(clientID);
     if (clientUIDString.empty()) {
@@ -252,24 +251,28 @@ void Data::updateOrSetUIDMapValue(MAP_UID_KEY key, const uint64 newDBID, const a
                                   const std::string newChannelName) {
     const auto iterator = this->m_UIDMap.find(key);
     if (iterator != this->m_UIDMap.end()) {
-        logTSMessage("Data: Updating client UID %s", key.c_str());
         if (newDBID != NULL_UINT) {
+			logTSMessage("Data: Updating client UID %s DBID to %llu.", key.c_str(), newDBID);
             iterator->second.clientDBID = newDBID;
         }
         if (newClientID != NULL_ANYID) {
+			logTSMessage("Data: Updating client UID %s clientID to %llu.", key.c_str(), newClientID);
             iterator->second.clientID = newClientID;
         }
         if (!newClientName.empty()) {
+			logTSMessage("Data: Updating client UID %s client name to %s.", key.c_str(), newClientName.c_str());
             iterator->second.clientName = newClientName;
         }
         if (newChannelID != NULL_UINT) {
+			logTSMessage("Data: Updating client UID %s channel id to %llu.", key.c_str(), newChannelID);
             iterator->second.channelID = newChannelID;
         }
         if (!newChannelName.empty()) {
+			logTSMessage("Data: Updating client UID %s channel name to %s.", key.c_str(), newChannelName.c_str());
             iterator->second.channelName = newChannelName;
         }
     } else {
-        logTSMessage("Data: Emplacing client UID %s", key.c_str());
+        logTSMessage("Data: Emplacing client UID %s: %llu, %llu, %s, %llu, %s.", key.c_str(), newDBID, newClientID, newClientName.c_str(), newChannelID, newChannelName.c_str());
         this->m_UIDMap.emplace(key, MAP_UID_VALUE{MAP_UID_VALUE(newDBID, newClientID, newClientName, newChannelID, newChannelName)});
     }
     this->sendClientsUpdate();
@@ -319,7 +322,7 @@ MAP_ID_VALUE Data::getIDMapValue(const MAP_ID_KEY key) {
 void Data::updateOrSetIDMapValue(MAP_ID_KEY key, std::string newClientUID) {
     const auto iterator = this->m_IDMap.find(key);
     if (iterator != this->m_IDMap.end()) {
-        logTSMessage("Data: Emplacing client ID %d", key);
+        logTSMessage("Data: Updating client ID %d", key);
         if (!newClientUID.empty()) {
             iterator->second = newClientUID;
         }
@@ -333,6 +336,7 @@ void Data::sendClientsUpdate() {
     std::vector<signalr::value> clients;
     for (const auto& pair : this->m_UIDMap) {
         const auto value = pair.second;
+		logTSMessage("Data: Will send: %llu, %s, %llu, %s.", value.clientDBID, value.clientName.c_str(), value.channelID, value.channelName.c_str());
         if (value.clientID != UNSET_ANYID) {
             std::map<std::string, signalr::value> clientMap;
             clientMap.insert(std::pair<std::string, signalr::value>("clientDBID", signalr::value(static_cast<double>(value.clientDBID))));

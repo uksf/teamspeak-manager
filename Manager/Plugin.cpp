@@ -74,10 +74,11 @@ void ts3plugin_onChannelSubscribeFinishedEvent(uint64 serverConnectionHandlerID)
 	});
 }
 
-void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, char* uniqueClientIdentifier, uint64 clientDatabaseID) {
-	logTSMessage("TS: Client DBID event tid: %u", std::this_thread::get_id());
-	Engine::getInstance()->addToFunctionQueue([uniqueClientIdentifier, clientDatabaseID]() {
-		Data::getInstance()->onClientDBIDfromUID(uniqueClientIdentifier, clientDatabaseID);
+void ts3plugin_onClientDBIDfromUIDEvent(uint64 serverConnectionHandlerID, const char* uniqueClientIdentifier, uint64 clientDatabaseID) {
+	logTSMessage("TS: Client DBID %llu for %s event tid: %u", clientDatabaseID, uniqueClientIdentifier, std::this_thread::get_id());
+	auto clientUID = std::string(uniqueClientIdentifier);
+	Engine::getInstance()->addToFunctionQueue([clientUID, clientDatabaseID]() {
+		Data::getInstance()->onClientDBIDfromUID(clientUID, clientDatabaseID);
 	});
 }
 
