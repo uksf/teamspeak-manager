@@ -18,6 +18,7 @@ void Engine::initialize() {
 void Engine::start() {
 	logTSMessage("Engine: Starting");
 	this->clearQueues();
+	this->m_stopRequested = false;
 	this->m_workerThread = std::thread(&Engine::doWork, this);
 	this->setNewState(STATE::RUNNING);
 	logTSMessage("Engine: Started");
@@ -25,19 +26,17 @@ void Engine::start() {
 
 void Engine::stop() {
 	if (this->getState() == STATE::STOPPED || this->getState() == STATE::STOPPING) return;
-
 	logTSMessage("Engine: Stopping");
+	this->m_stopRequested = true;
 
-    SignalrClient::getInstance()->requestDisconnect();
     while (SignalrClient::getInstance()->getState() != CONNECTION_STATE::DISCONNECTED) {
-		Sleep(1);
+		Sleep(10);
     }
 
 	this->setNewState(STATE::STOPPING);
 	if (this->m_workerThread.joinable()) {
 		this->m_workerThread.join();
 	}
-
 	this->clearQueues();
 	Data::getInstance()->resetClientMaps();
 	this->setNewState(STATE::STOPPED);
@@ -69,10 +68,12 @@ void Engine::doWork() {
 		SignalrClient::getInstance()->updateConnectionState();
 		const auto signalrState = SignalrClient::getInstance()->getState();
 
-        if (SignalrClient::getInstance()->isDisconnectRequested() && signalrState != CONNECTION_STATE::CONNECTING) {
-			logTSMessage("Engine: Running disconnect request");
-			SignalrClient::getInstance()->disconnect();
-        } else {
+		if (this->m_stopRequested) {
+			if (signalrState == CONNECTION_STATE::CONNECTED) {
+				logTSMessage("Engine: Running stop request");
+				SignalrClient::getInstance()->disconnect();
+			}
+		} else {
 			// If disconnected
 			if (signalrState == CONNECTION_STATE::DISCONNECTED) {
 				// Connect
@@ -107,7 +108,7 @@ void Engine::doWork() {
 					}
 				}
 			}
-        }
+		}
 
 		// Sleep 1ms
 		Sleep(1);

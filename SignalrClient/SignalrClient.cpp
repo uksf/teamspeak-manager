@@ -7,7 +7,6 @@
 void SignalrClient::initialize() {
 	logTSMessage("Signalr: Initialising");
 	this->setNewState(CONNECTION_STATE::DISCONNECTED);
-	this->m_disconnectRequested = false;
 
 	this->m_connection = std::make_shared<signalr::hub_connection>("http://localhost:5000/hub/teamspeak", signalr::trace_level::errors, std::make_shared<logger>());
 
@@ -19,11 +18,6 @@ void SignalrClient::initialize() {
 	});
 
 	logTSMessage("Signalr: Initialization complete");
-}
-
-void SignalrClient::requestDisconnect() {
-	logTSMessage("Signalr: Disconnect requested");
-	this->m_disconnectRequested = true;
 }
 
 void SignalrClient::connect() {
@@ -91,10 +85,6 @@ void SignalrClient::disconnect() {
 
 CONNECTION_STATE SignalrClient::getState() const {
 	return this->m_state;
-}
-
-bool SignalrClient::isDisconnectRequested() const {
-	return this->m_disconnectRequested;
 }
 
 void SignalrClient::setNewState(const CONNECTION_STATE state) {

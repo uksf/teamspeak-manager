@@ -16,7 +16,7 @@ public:
 	void start();
 	void stop();
 
-    [[nodiscard]] STATE getState() const;
+	[[nodiscard]] STATE getState() const;
 
 	void addToFunctionQueue(std::function<void()> function);
 	void addToSendQueue(SERVER_MESSAGE_TYPE type, signalr::value value);
@@ -24,11 +24,11 @@ public:
 
 private:
 	STATE m_state = STATE::STOPPED;
+	bool m_stopRequested = false;
 	std::thread m_workerThread;
 	Concurrency::concurrent_queue<std::function<void()>> m_functionQueue{};
 	Concurrency::concurrent_queue<std::pair<SERVER_MESSAGE_TYPE, signalr::value>> m_sendQueue{};
 	Concurrency::concurrent_queue<ClientMessage> m_receiveQueue{};
-
 
 	void setNewState(STATE state);
 	void clearQueues();
