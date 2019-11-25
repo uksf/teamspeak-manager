@@ -29,10 +29,15 @@ void Procedures::sendMessageToClient(const uint64 clientDBID, const std::string 
     logTSMessage("Procedure: Send message to %llu: '%s'", clientDBID, message.c_str());
 
     const MAP_DBID_VALUE clientUID = Data::getInstance()->getDBIDMapValue(clientDBID);
+	logTSMessage("Procedure: Trying to get ClientUID from DBID map: '%s'", clientUID);
     if (!clientUID.empty()) {
         const auto mapUIDValue = Data::getInstance()->getUIDMapValue(clientUID);
+		logTSMessage("Procedure: Trying to get ClientID from UID map, valid?: '%s'", mapUIDValue.invalid ? "no" : "yes");
         if (!mapUIDValue.invalid) {
-            ts3Functions.requestSendPrivateTextMsg(ts3Functions.getCurrentServerConnectionHandlerID(), message.c_str(), mapUIDValue.clientID, nullptr);
+			logTSMessage("Procedure: Got ClientID from UID map: '%llu'", mapUIDValue.clientID);
+			if (ts3Functions.requestSendPrivateTextMsg(ts3Functions.getCurrentServerConnectionHandlerID(), message.c_str(), mapUIDValue.clientID, nullptr) != ERROR_ok) {
+				logTSMessage("Procedure: Failed to send message to %llu", mapUIDValue.clientID);
+			}
         } else {
             logTSMessage("Procedure: Failed to get ID from UID %s", clientUID.c_str());
         }

@@ -3,8 +3,6 @@
 #include "ManagerCommon.h"
 #include "../Common/Singleton.h"
 
-class ClientMessage;
-
 class ProcedureEngine final : public Singleton<ProcedureEngine> {
 public:
 	ProcedureEngine() = default;

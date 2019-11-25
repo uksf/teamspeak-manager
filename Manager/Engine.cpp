@@ -120,7 +120,6 @@ void Engine::addToFunctionQueue(const std::function<void()> function) {
 }
 
 void Engine::addToSendQueue(SERVER_MESSAGE_TYPE type, signalr::value value) {
-	std::lock_guard<std::mutex> lock(m_lockable_mutex);
 	this->m_sendQueue.push(std::pair<SERVER_MESSAGE_TYPE, signalr::value>(type, value));
 }
 

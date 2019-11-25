@@ -37,7 +37,6 @@ void ts3plugin_setFunctionPointers(const struct TS3Functions funcs) {
 
 int ts3plugin_init() {
 	logTSMessage("Loaded");
-	processId = GetCurrentProcessId();
 	logTSMessage("TS: Main tid: %u", std::this_thread::get_id());
 	Engine::getInstance()->initialize();
 	if (ts3Functions.getCurrentServerConnectionHandlerID()) {

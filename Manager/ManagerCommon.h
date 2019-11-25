@@ -10,8 +10,6 @@
 #include "../Common/ClientMessage.h"
 #include "IProcedure.h"
 
-class IMessage;
-
 // UID map
 // key: UID
 // value: DBID, clientID, clientName, channelID, channelName

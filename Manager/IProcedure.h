@@ -4,8 +4,10 @@
 
 class IProcedure {
 public:
-	virtual ~IProcedure() = default;
+    virtual ~IProcedure() = default;
 
-	virtual void call(ClientMessage message) = 0;
-	DECLARE_INTERFACE_MEMBER(CLIENT_MESSAGE_TYPE, Type)
+    virtual void call(ClientMessage message) = 0;
+public:
+    virtual void setType(CLIENT_MESSAGE_TYPE value) = 0;
+    virtual CLIENT_MESSAGE_TYPE getType() = 0;
 };

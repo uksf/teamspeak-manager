@@ -52,6 +52,4 @@ enum class CLIENT_MESSAGE_TYPE {
 	SHUTDOWN
 };
 
-inline double processId = 0;
-
 void logTSMessage(char const* format, ...);

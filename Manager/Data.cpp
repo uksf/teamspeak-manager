@@ -336,8 +336,8 @@ void Data::sendClientsUpdate() {
     std::vector<signalr::value> clients;
     for (const auto& pair : this->m_UIDMap) {
         const auto value = pair.second;
-		logTSMessage("Data: Will send: %llu, %s, %llu, %s.", value.clientDBID, value.clientName.c_str(), value.channelID, value.channelName.c_str());
         if (value.clientID != UNSET_ANYID) {
+			logTSMessage("Data: Will send: %llu, %s, %llu, %s.", value.clientDBID, value.clientName.c_str(), value.channelID, value.channelName.c_str());
             std::map<std::string, signalr::value> clientMap;
             clientMap.insert(std::pair<std::string, signalr::value>("clientDBID", signalr::value(static_cast<double>(value.clientDBID))));
             clientMap.insert(std::pair<std::string, signalr::value>("clientName", value.clientName));
