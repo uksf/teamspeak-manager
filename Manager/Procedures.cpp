@@ -29,7 +29,7 @@ void Procedures::sendMessageToClient(const uint64 clientDBID, const std::string 
     logTSMessage("Procedure: Send message to %llu: '%s'", clientDBID, message.c_str());
 
     const MAP_DBID_VALUE clientUID = Data::getInstance()->getDBIDMapValue(clientDBID);
-	logTSMessage("Procedure: Trying to get ClientUID from DBID map: '%s'", clientUID);
+	logTSMessage("Procedure: Trying to get ClientUID from DBID map: '%s'", clientUID.c_str());
     if (!clientUID.empty()) {
         const auto mapUIDValue = Data::getInstance()->getUIDMapValue(clientUID);
 		logTSMessage("Procedure: Trying to get ClientID from UID map, valid?: '%s'", mapUIDValue.invalid ? "no" : "yes");

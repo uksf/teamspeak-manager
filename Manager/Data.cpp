@@ -200,8 +200,10 @@ std::string Data::getClientUID(const anyID clientID) {
 MAP_DBID_VALUE Data::getDBIDMapValue(const MAP_DBID_KEY key) {
     const auto iterator = this->m_DBIDMap.find(key);
     if (iterator != this->m_DBIDMap.end()) {
+		logTSMessage("Data: Get DBID map value found '%s' by key '%llu'", iterator->second.c_str(), key);
         return iterator->second;
     }
+	logTSMessage("Data: Get DBID map value not found for key '%llu'", key);
     return "";
 }
 
