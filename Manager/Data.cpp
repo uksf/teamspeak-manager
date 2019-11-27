@@ -90,7 +90,7 @@ int Data::checkIfBlacklisted(char* name) {
 
 void Data::checkClientServerGroups(const char* clientUniqueIdentity) {
     const auto value = this->getUIDMapValue(clientUniqueIdentity);
-    if (!value.invalid) {
+    if (value.clientID != UNSET_ANYID) {
         if (value.clientDBID != NULL_UINT) {
             ts3Functions.requestServerGroupsByClientID(ts3Functions.getCurrentServerConnectionHandlerID(), value.clientDBID, nullptr);
         } else {
@@ -210,8 +210,10 @@ MAP_DBID_VALUE Data::getDBIDMapValue(const MAP_DBID_KEY key) {
 MAP_UID_VALUE Data::getUIDMapValue(const MAP_UID_KEY key) {
     const auto iterator = this->m_UIDMap.find(key);
     if (iterator != this->m_UIDMap.end()) {
+		logTSMessage("Data: Get UID map value found '%llu' by key '%s'", iterator->second.clientID, key.c_str());
         return iterator->second;
     }
+	logTSMessage("Data: Get UID map value not found for key '%s'", key.c_str());
     return MAP_UID_VALUE{};
 }
 

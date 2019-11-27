@@ -14,24 +14,20 @@
 // key: UID
 // value: DBID, clientID, clientName, channelID, channelName
 struct MAP_UID_VALUE {
-    uint64 clientDBID{};
-    anyID clientID{};
-    std::string clientName;
-    uint64 channelID{};
-    std::string channelName;
-    bool invalid = false;
+	uint64 clientDBID{};
+	anyID clientID{};
+	std::string clientName;
+	uint64 channelID{};
+	std::string channelName;
 
-    MAP_UID_VALUE() {
-        invalid = true;
-    }
-
-    MAP_UID_VALUE(const uint64 newDBID, const anyID newClientID, std::string newClientName, const uint64 newChannelID, std::string newChannelName) : clientDBID(newDBID),
-                                                                                                                                                     clientID(newClientID),
-                                                                                                                                                     clientName(std::move(
-                                                                                                                                                         newClientName)),
-                                                                                                                                                     channelID(newChannelID),
-                                                                                                                                                     channelName(std::move(
-                                                                                                                                                         newChannelName)) { }
+	MAP_UID_VALUE() = default;
+	MAP_UID_VALUE(const uint64 newDBID, const anyID newClientID, std::string newClientName, const uint64 newChannelID, std::string newChannelName) : clientDBID(newDBID),
+		clientID(newClientID),
+		clientName(std::move(
+		newClientName)),
+		channelID(newChannelID),
+		channelName(std::move(
+		newChannelName)) { }
 };
 
 typedef std::string MAP_UID_KEY;

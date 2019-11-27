@@ -32,8 +32,8 @@ void Procedures::sendMessageToClient(const uint64 clientDBID, const std::string 
 	logTSMessage("Procedure: Trying to get ClientUID from DBID map: '%s'", clientUID.c_str());
     if (!clientUID.empty()) {
         const auto mapUIDValue = Data::getInstance()->getUIDMapValue(clientUID);
-		logTSMessage("Procedure: Trying to get ClientID from UID map, valid?: '%s'", mapUIDValue.invalid ? "no" : "yes");
-        if (!mapUIDValue.invalid) {
+		logTSMessage("Procedure: Trying to get ClientID from UID map, valid?: '%s'", mapUIDValue.clientID == UNSET_ANYID ? "no" : "yes");
+        if (mapUIDValue.clientID != UNSET_ANYID) {
 			logTSMessage("Procedure: Got ClientID from UID map: '%llu'", mapUIDValue.clientID);
 			if (ts3Functions.requestSendPrivateTextMsg(ts3Functions.getCurrentServerConnectionHandlerID(), message.c_str(), mapUIDValue.clientID, nullptr) != ERROR_ok) {
 				logTSMessage("Procedure: Failed to send message to %llu", mapUIDValue.clientID);
