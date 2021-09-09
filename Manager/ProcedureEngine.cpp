@@ -39,7 +39,7 @@ IProcedure* ProcedureEngine::findProcedure(const CLIENT_MESSAGE_TYPE cmd) {
 }
 
 void ProcedureEngine::runProcedure(ClientMessage message) {
-	logTSMessage("Procedure: run procedure tid: %u", std::this_thread::get_id());
+	logTSMessage("Procedure: run procedure type: %d, tid: %u", message.getType(), std::this_thread::get_id());
 	if (message.getType() == CLIENT_MESSAGE_TYPE::EMPTY_PROCEDURE) {
 		return;
 	}
@@ -47,5 +47,7 @@ void ProcedureEngine::runProcedure(ClientMessage message) {
 	IProcedure* function = this->findProcedure(message.getType());
 	if (function) {
 		function->call(message);
-	}
+	} else {
+        logTSMessage("No function found");
+    }
 }
