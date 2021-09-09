@@ -11,6 +11,7 @@ public:
     void initialize();
 
     void resetClientMaps();
+    void reload();
     void populateClientMaps();
     void handleClient(anyID clientID, uint64 newChannelID, int visibility);
 

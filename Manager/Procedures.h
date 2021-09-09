@@ -12,6 +12,7 @@ public:
     static void assignServerGroup(uint64 clientDBID, uint64 serverGroupID);
     static void unassignServerGroup(uint64 clientDBID, uint64 serverGroupID);
     static void sendMessageToClient(uint64 clientDBID, std::string message);
+    static void reload();
     static void shutdown();
 };
 

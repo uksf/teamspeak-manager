@@ -2,6 +2,7 @@
 #include "IProcedure.h"
 #include "../Common/ClientMessage.h"
 #include "ProcShutdown.h"
+#include "ProcReload.h"
 #include "ProcUpdateServerGroups.h"
 #include "ProcAssignServerGroup.h"
 #include "ProcUnassignServerGroup.h"
@@ -10,6 +11,7 @@
 
 void ProcedureEngine::initialize() {
 	this->addProcedure(new ProcShutdown());
+	this->addProcedure(new ProcReload());
 	this->addProcedure(new ProcUpdateServerGroups());
 	this->addProcedure(new ProcAssignServerGroup());
 	this->addProcedure(new ProcUnassignServerGroup());

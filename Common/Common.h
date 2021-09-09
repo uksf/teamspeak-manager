@@ -49,7 +49,8 @@ enum class CLIENT_MESSAGE_TYPE {
 	UNASSIGN,
 	GROUPS,
 	MESSAGE,
-	SHUTDOWN
+	SHUTDOWN,
+    RELOAD
 };
 
 void logTSMessage(char const* format, ...);

@@ -46,6 +46,11 @@ void Procedures::sendMessageToClient(const uint64 clientDBID, const std::string 
     }
 }
 
+void Procedures::reload() {
+	logTSMessage("Procedure: Reloading via API");
+	Data::getInstance()->reload();
+}
+
 void Procedures::shutdown() {
 	logTSMessage("Procedure: Stopping via API");
 	ts3Functions.stopConnection(ts3Functions.getCurrentServerConnectionHandlerID(), "Jarvis needs to reboot");

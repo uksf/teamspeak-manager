@@ -17,6 +17,15 @@ void Data::resetClientMaps() {
     this->m_DBIDCallbackQueue.clear();
 }
 
+void Data::reload() {
+	logTSMessage("Data: Reload client lists tid %u", std::this_thread::get_id());
+    this->m_UIDMap.clear();
+    this->m_DBIDMap.clear();
+    this->m_IDMap.clear();
+    this->m_DBIDCallbackQueue.clear();
+    this->populateClientMaps();
+}
+
 void Data::populateClientMaps() {
     this->resetClientMaps();
     logTSMessage("Data: Populating client list");
