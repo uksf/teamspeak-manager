@@ -3,7 +3,7 @@
 #include "Engine.h"
 #include "Data.h"
 
-constexpr auto PLUGIN_API_VERSION = 23;
+constexpr auto PLUGIN_API_VERSION = 26;
 
 TS3Functions ts3Functions;
 
