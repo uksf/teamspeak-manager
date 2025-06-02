@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "*.ext": "sqf",
+        "*.hpp": "cpp",
+        "array": "cpp",
+        "xutility": "cpp",
+        "xlocale": "cpp",
+        "functional": "cpp",
+        "*.rws": "xml",
+        "*.xml": "xml",
+        "type_traits": "cpp"
+    }
+}

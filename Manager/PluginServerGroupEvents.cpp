@@ -10,8 +10,14 @@ void ts3plugin_onServerGroupClientAddedEvent(uint64 serverConnectionHandlerID, a
     anyID selfId;
     if (ts3Functions.getClientID(serverConnectionHandlerID, &selfId) == ERROR_ok && invokerClientID != selfId) {
         logTSMessage("TS: Client server group change not invoked by me: %d", clientID);
-		Engine::getInstance()->addToFunctionQueue([clientUniqueIdentity]() {
-			Data::getInstance()->checkClientServerGroups(clientUniqueIdentity);
+        
+        // Fix: Convert const char* to std::string to avoid dangling pointer
+        std::string clientUID(clientUniqueIdentity ? clientUniqueIdentity : "");
+        logTSMessage("TS: Server group added - capturing UID: '%s' for clientID: %d", clientUID.c_str(), clientID);
+        
+		Engine::getInstance()->addToFunctionQueue([clientUID]() {
+            logTSMessage("TS: Server group added - executing with captured UID: '%s'", clientUID.c_str());
+			Data::getInstance()->checkClientServerGroups(clientUID.c_str());
 		});
     }
 }
@@ -21,8 +27,14 @@ void ts3plugin_onServerGroupClientDeletedEvent(uint64 serverConnectionHandlerID,
     anyID selfId;
     if (ts3Functions.getClientID(serverConnectionHandlerID, &selfId) == ERROR_ok && invokerClientID != selfId) {
         logTSMessage("TS: Client server group change not invoked by me: %d", clientID);
-		Engine::getInstance()->addToFunctionQueue([clientUniqueIdentity]() {
-			Data::getInstance()->checkClientServerGroups(clientUniqueIdentity);
+        
+        // Fix: Convert const char* to std::string to avoid dangling pointer
+        std::string clientUID(clientUniqueIdentity ? clientUniqueIdentity : "");
+        logTSMessage("TS: Server group deleted - capturing UID: '%s' for clientID: %d", clientUID.c_str(), clientID);
+        
+		Engine::getInstance()->addToFunctionQueue([clientUID]() {
+            logTSMessage("TS: Server group deleted - executing with captured UID: '%s'", clientUID.c_str());
+			Data::getInstance()->checkClientServerGroups(clientUID.c_str());
 		});
     }
 }

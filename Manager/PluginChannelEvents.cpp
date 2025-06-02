@@ -15,7 +15,17 @@ void ts3plugin_onUpdateChannelEditedEvent(uint64 serverConnectionHandlerID, uint
         return;
     }
 
-	Engine::getInstance()->addToFunctionQueue([channelID, channelName]() {
-		Data::getInstance()->updateUIDMapChannelName(channelID, channelName);
+    // Fix: Convert char* to std::string to avoid dangling pointer and add null check
+    std::string channelNameStr(channelName ? channelName : "");
+    logTSMessage("TS: Channel edited - capturing name: '%s' for channelID: %llu", channelNameStr.c_str(), channelID);
+    
+    // Free the memory allocated by TeamSpeak API
+    if (channelName) {
+        ts3Functions.freeMemory(channelName);
+    }
+
+	Engine::getInstance()->addToFunctionQueue([channelID, channelNameStr]() {
+        logTSMessage("TS: Channel edited - executing with captured name: '%s' for channelID: %llu", channelNameStr.c_str(), channelID);
+		Data::getInstance()->updateUIDMapChannelName(channelID, channelNameStr);
 	});
 }

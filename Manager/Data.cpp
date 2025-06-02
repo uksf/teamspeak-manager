@@ -52,7 +52,11 @@ void Data::handleClient(const anyID clientID, const uint64 newChannelID, const i
             logTSMessage("Data: Failed getting client name");
             return;
         }
-        this->updateOrSetUIDMapValue(clientUID, NULL_UINT, clientID, clientName, newChannelID, "");
+        std::string clientNameStr(clientName ? clientName : "");
+        if (clientName) {
+            ts3Functions.freeMemory(clientName);
+        }
+        this->updateOrSetUIDMapValue(clientUID, NULL_UINT, clientID, clientNameStr, newChannelID, "");
         this->updateClientChannel(clientUID, newChannelID);
         this->addToCallbackQueue(clientUID, DBID_QUEUE_MODE::GROUPS);
         ts3Functions.requestClientDBIDfromUID(ts3Functions.getCurrentServerConnectionHandlerID(), clientUID.c_str(), nullptr);
@@ -65,7 +69,11 @@ void Data::handleClient(const anyID clientID, const uint64 newChannelID, const i
             logTSMessage("Failed getting client name");
             return;
         }
-        this->updateOrSetUIDMapValue(clientUID, NULL_UINT, clientID, clientName, newChannelID, "");
+        std::string clientNameStr(clientName ? clientName : "");
+        if (clientName) {
+            ts3Functions.freeMemory(clientName);
+        }
+        this->updateOrSetUIDMapValue(clientUID, NULL_UINT, clientID, clientNameStr, newChannelID, "");
         this->updateClientChannel(clientUID, newChannelID);
         const MAP_UID_VALUE value = this->getUIDMapValue(clientUID);
         if (value.clientDBID == NULL_UINT) {
@@ -94,15 +102,24 @@ int Data::checkIfBlacklisted(char* name) {
 }
 
 void Data::checkClientServerGroups(const char* clientUniqueIdentity) {
+    // Add comprehensive logging to verify the fix
+    logTSMessage("Data: checkClientServerGroups called with UID: '%s' (length: %d)", 
+                 clientUniqueIdentity ? clientUniqueIdentity : "NULL", 
+                 clientUniqueIdentity ? strlen(clientUniqueIdentity) : 0);
+    
     const auto value = this->getUIDMapValue(clientUniqueIdentity);
     if (value.clientID != UNSET_ANYID) {
+        logTSMessage("Data: Found client in UID map - clientID: %d, clientDBID: %llu", value.clientID, value.clientDBID);
         if (value.clientDBID != NULL_UINT) {
+            logTSMessage("Data: Client DBID available, requesting server groups for DBID: %llu", value.clientDBID);
             ts3Functions.requestServerGroupsByClientID(ts3Functions.getCurrentServerConnectionHandlerID(), value.clientDBID, nullptr);
         } else {
+            logTSMessage("Data: Client DBID not available, adding to callback queue and requesting DBID for UID: '%s'", clientUniqueIdentity);
             this->addToCallbackQueue(clientUniqueIdentity, DBID_QUEUE_MODE::GROUPS);
             ts3Functions.requestClientDBIDfromUID(ts3Functions.getCurrentServerConnectionHandlerID(), clientUniqueIdentity, nullptr);
         }
     } else {
+        logTSMessage("Data: Client not found in UID map, adding to callback queue and requesting DBID for UID: '%s'", clientUniqueIdentity);
         this->addToCallbackQueue(clientUniqueIdentity, DBID_QUEUE_MODE::GROUPS);
         ts3Functions.requestClientDBIDfromUID(ts3Functions.getCurrentServerConnectionHandlerID(), clientUniqueIdentity, nullptr);
     }
@@ -180,7 +197,11 @@ void Data::onClientDisplayName(const anyID clientID) {
         logTSMessage("Data: Failed getting client name");
         return;
     }
-    this->updateOrSetUIDMapValue(clientUID, NULL_UINT, NULL_ANYID, clientName, NULL_UINT, "");
+    std::string clientNameStr(clientName ? clientName : "");
+    if (clientName) {
+        ts3Functions.freeMemory(clientName);
+    }
+    this->updateOrSetUIDMapValue(clientUID, NULL_UINT, NULL_ANYID, clientNameStr, NULL_UINT, "");
 }
 
 std::string Data::getClientUID(const anyID clientID) {
@@ -192,14 +213,23 @@ std::string Data::getClientUID(const anyID clientID) {
             logTSMessage("Data: Failed to get client UID: %d. Won't continue", clientID);
             return "";
         }
-        if (this->checkIfBlacklisted(clientUID)) return "";
+        if (this->checkIfBlacklisted(clientUID)) {
+            if (clientUID) {
+                ts3Functions.freeMemory(clientUID);
+            }
+            return "";
+        }
         logTSMessage("Data: Client UID not found in ID map, setting %d as %s", clientID, clientUID);
-        this->updateOrSetIDMapValue(clientID, clientUID);
+        std::string clientUIDStr(clientUID ? clientUID : "");
+        if (clientUID) {
+            ts3Functions.freeMemory(clientUID);
+        }
+        this->updateOrSetIDMapValue(clientID, clientUIDStr);
+        return clientUIDStr;
     } else {
         logTSMessage("Data: Client UID found in ID map, getting %d as %s", clientID, clientUIDString.c_str());
         return clientUIDString;
     }
-    return clientUID;
 }
 
 MAP_DBID_VALUE Data::getDBIDMapValue(const MAP_DBID_KEY key) {
@@ -240,7 +270,11 @@ void Data::updateClientChannel(const std::string clientUID, const uint64 newChan
         logTSMessage("Data: Failed getting channel name");
         return;
     }
-    this->updateOrSetUIDMapValue(clientUID, NULL_UINT, NULL_ANYID, "", newChannelID, channelName);
+    std::string channelNameStr(channelName ? channelName : "");
+    if (channelName) {
+        ts3Functions.freeMemory(channelName);
+    }
+    this->updateOrSetUIDMapValue(clientUID, NULL_UINT, NULL_ANYID, "", newChannelID, channelNameStr);
 }
 
 void Data::updateOrSetDBIDMapValue(MAP_DBID_KEY key, std::string newClientUID) {
